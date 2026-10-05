@@ -478,3 +478,89 @@ With `--sqlite`, the findings go into a small database file. You can then ask qu
    - Write the test first in `test_report.py`.
 3. **Ask the database a question.**
    - Run with `--sqlite`. Open `findings.sqlite` with any SQLite viewer (or Python), and write a query that lists every file with a WARNING, sorted by path.
+
+---
+
+## Module 6: sample delivery, acceptance test and release checks (`tools/make_fixtures.py`, `tests/test_acceptance.py`)
+
+### What it does, step by step
+
+1. **`tools/make_fixtures.py` builds a made-up delivery** with **one deliberate example of every problem** the tool knows about:
+   - a changed file;
+   - an empty file;
+   - a file listed twice with two versions, and one listed twice with the same version;
+   - a missing file and an extra file;
+   - a `.DS_Store`;
+   - a Mac-style name and a case-only difference;
+   - a name starting with a space;
+   - a file inside an extra folder;
+   - a damaged manifest line;
+   - a second manifest that disagrees with the first.
+
+   Each line in the file has a comment saying which problem it plants. Run it with `python -m tools.make_fixtures`. If `fixtures_out/` already exists, it **stops** rather than deleting it, following the project rule.
+2. **`tests/test_acceptance.py` runs the tool on that delivery** and checks that:
+   - it finds **exactly** the planted problems, with nothing missing and nothing extra;
+   - the five probable causes come out in the right order;
+   - **every finding code the tool has** appears in the sample. If someone adds a new kind of finding later, this test fails until a sample is added. The only exception is the absolute-path stop, which is tested on the command line instead, because the tool stops before writing a report;
+   - a clean copy of the sample gives no findings at all.
+3. **Proving the test has teeth.** I deliberately removed one planted problem (the missing file) and confirmed the test noticed. A test that can't fail proves nothing.
+4. **Release checks:**
+   - **Clean-copy test:** the project was copied from Git into an empty folder and all tests run there. That proves nothing the tests need is left out of the repository.
+   - **Safety search** across every published file *and* the commit history: tape-software names, local paths, hostnames, passwords and keys.
+
+### Interview questions
+
+<details><summary>1. What's the difference between the unit tests and the acceptance test?</summary>
+Unit tests check one small piece at a time (for example "a pipe manifest is detected"). The acceptance test checks the whole tool on a realistic delivery, end to end: every planted problem found, nothing invented.
+</details>
+
+<details><summary>2. Why plant exactly one example of each problem?</summary>
+So the expected result is known in advance and easy to read. If the tool finds anything else, it's a false alarm. If it misses one, it's a gap. Both fail the test.
+</details>
+
+<details><summary>3. How do you know the acceptance test isn't just passing by accident?</summary>
+I broke the sample on purpose (removed the planted missing file) and confirmed the result changed and the test would fail.
+</details>
+
+<details><summary>4. What stops someone adding a new check and forgetting to test it?</summary>
+A test compares the codes found in the sample with every code the tool defines. A new code without a sample makes it fail.
+</details>
+
+<details><summary>5. Why doesn't the generator delete an old sample folder?</summary>
+The project rule is to never delete files by default, even the tool's own output. It stops and tells you to remove the folder yourself.
+</details>
+
+<details><summary>6. What is the clean-copy test for?</summary>
+To catch "works on my machine". It downloads the repository into an empty folder and runs the tests there, so a file that was never committed would show up as a failure.
+</details>
+
+<details><summary>7. What did you search for before publishing, and why include the commit history?</summary>
+Client and product names, local paths, hostnames, passwords and keys. Git keeps every old version and every commit message, so something removed from a file can still be published through the history.
+</details>
+
+<details><summary>8. What are the known limits, and why list them in the README?</summary>
+For example: it's tested on Windows only so far, and a file in a wrapper folder that *also* has a Unicode difference isn't paired. Listing limits honestly is part of a tool being trustworthy, because users know where not to rely on it.
+</details>
+
+<details><summary>9. Why do the "locked file" findings differ between the test and a real run of the sample?</summary>
+In the test the lock is simulated, because real locks behave differently on each operating system. On a real run the file reads normally, so the sample shows 8 errors instead of 9.
+</details>
+
+<details><summary>10. If you had another week, what would you add?</summary>
+Testing on macOS and Linux; a "whole folder missing" cause; detecting proposed clean names that collide; and timing different read sizes on a large file to back the 1 MiB default with real numbers.
+</details>
+
+### Exercises: change this behaviour
+
+1. **Plant a new problem.**
+   - Add a file named `clip_0010.mov.` (with a trailing full stop) to the manifest *only*.
+   - Predict which findings appear, then run the acceptance test and update `EXPECTED_FINDINGS`.
+2. **Break the sample on purpose.**
+   - Change the `.DS_Store` line in `_FILES` to `ShowA/Reel01/Thumbs.db`.
+   - Does the acceptance test still pass? Why?
+3. **Run the whole release check yourself:**
+   1. `python -m tools.make_fixtures`
+   2. the check command from the README
+   3. `python -m pytest`
+
+   Compare your output with the README's example run.
