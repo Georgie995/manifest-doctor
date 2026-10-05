@@ -3,6 +3,8 @@ name = "delivery-verify"
 version = "0.1.0"
 description = "Read-only manifest verifier that groups findings into probable causes."
 requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Georgi Stoyanov" }]
 dependencies = []  # standard library only, by design
 
 [project.optional-dependencies]

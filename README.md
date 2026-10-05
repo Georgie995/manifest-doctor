@@ -163,4 +163,4 @@ The assistant wrote the tests first, from these requirements, and each test was 
 
 ## Licence
 
-To be decided before publishing.
+[MIT](LICENSE) © 2026 Georgi Stoyanov
