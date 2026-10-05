@@ -4,7 +4,7 @@ One section per module. Each has a plain-English explanation, interview question
 
 ---
 
-## Module 1: reading manifests (`delivery_verify/manifest.py`)
+## Module 1: reading manifests (`manifest_doctor/manifest.py`)
 
 ### What it does, step by step
 
@@ -378,11 +378,11 @@ This module turns the engine (modules 1–4) into a tool you can type, or that n
 
 1. **You type a command**, for example:
    ```
-   python -m delivery_verify check D:/Incoming/ShowA --manifest ShowA.md5 --out D:/Reports
+   python -m manifest_doctor check D:/Incoming/ShowA --manifest ShowA.md5 --out D:/Reports
    ```
 2. **Settings are worked out in three layers** (`config.py`):
    1. built-in defaults;
-   2. a **workflow profile** from `delivery-verify.toml`, if you name one with `--profile`;
+   2. a **workflow profile** from `manifest-doctor.toml`, if you name one with `--profile`;
    3. anything typed on the command line.
 
    Each layer overrides the one before. The report records where every setting came from. A mistake in the settings file stops the tool with a clear message instead of being quietly ignored.
@@ -424,7 +424,7 @@ SELECT c.code, p.path FROM causes c JOIN cause_paths p ON p.cause_id = c.cause_i
   - the report folder refused inside the delivery;
   - the absolute-path stop choosing `D:/Deliveries/` rather than `D:/Deliveries/ShowA/`;
   - following its advice gives a clean run;
-  - a real run as `python -m delivery_verify`.
+  - a real run as `python -m manifest_doctor`.
 
 ### Interview questions
 
@@ -471,7 +471,7 @@ With `--sqlite`, the findings go into a small database file. You can then ask qu
 ### Exercises: change this behaviour
 
 1. **Write a profile.**
-   - Create `delivery-verify.toml` with a `tape-restore` profile where EXTRA is an ERROR and `fail_on = "warning"`.
+   - Create `manifest-doctor.toml` with a `tape-restore` profile where EXTRA is an ERROR and `fail_on = "warning"`.
    - Run a check with and without `--profile tape-restore`, and compare the exit codes.
 2. **Show the proposed name in the summary.**
    - Make `summary.md` show the proposed clean name for NAME_HYGIENE findings. (Hint: `_write_summary`.)

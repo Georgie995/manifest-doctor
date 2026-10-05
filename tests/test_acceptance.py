@@ -4,9 +4,9 @@ every finding code and every probable cause. The tool must find exactly those, n
 
 import unicodedata
 
-from delivery_verify import hashing
-from delivery_verify.findings import DEFAULT_SEVERITY
-from delivery_verify.verify import verify
+from manifest_doctor import hashing
+from manifest_doctor.findings import DEFAULT_SEVERITY
+from manifest_doctor.verify import verify
 from tools.make_fixtures import build_fixtures
 
 NFD_CAFE = unicodedata.normalize("NFD", "ShowA/Audio/Café_stem.wav")

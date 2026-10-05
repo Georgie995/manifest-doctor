@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from delivery_verify.cli import main
+from manifest_doctor.cli import main
 
 PROJECT = Path(__file__).resolve().parents[1]
 
@@ -119,7 +119,7 @@ def test_sqlite_flag_writes_the_database(tmp_path):
 def test_tool_runs_as_a_real_command(tmp_path):
     tree, manifest = delivery(tmp_path, {"a.mov": b"aaa"}, [f"{md5(b'aaa')}  a.mov"])
     completed = subprocess.run(
-        [sys.executable, "-m", "delivery_verify", "check", str(tree), "--manifest", str(manifest),
+        [sys.executable, "-m", "manifest_doctor", "check", str(tree), "--manifest", str(manifest),
          "--out", str(tmp_path / "reports")],
         cwd=PROJECT, capture_output=True, text=True, encoding="utf-8")
     assert completed.returncode == 0, completed.stderr

@@ -1,4 +1,4 @@
-# delivery-verify: design
+# manifest-doctor: design
 
 Status: **Approved by Georgi on 2026-10-05.**
 
@@ -12,7 +12,7 @@ Existing tools (`md5sum -c`, ASC MHL's `ascmhl`, `hashdeep`, `rclone check`, Bag
 - A Mac-made name and a Windows-made name that look identical are reported as missing.
 - A manifest that lists the same file twice with two different checksums fails at the recipient's end.
 
-`delivery-verify` does the standard comparison and then **groups the findings into probable causes, listing exactly which files each cause affects**.
+`manifest-doctor` does the standard comparison and then **groups the findings into probable causes, listing exactly which files each cause affects**.
 
 It is **read-only**. It never renames, moves, deletes or changes permissions on anything it checks.
 
@@ -36,7 +36,7 @@ It is **read-only**. It never renames, moves, deletes or changes permissions on 
 ## 3. How it is used
 
 ```
-delivery-verify check TREE --manifest FILE [--manifest FILE ...] [options]
+manifest-doctor check TREE --manifest FILE [--manifest FILE ...] [options]
 ```
 
 | Option | Default | Purpose |
@@ -47,7 +47,7 @@ delivery-verify check TREE --manifest FILE [--manifest FILE ...] [options]
 | `--prefix-mode suggest\|auto\|off` | `suggest` | What to do when manifest paths are absolute (section 5.3). |
 | `--strip-prefix TEXT` | none | Remove this exact start from every manifest path. |
 | `--name-rules windows\|strict` | `windows` | Which illegal-character list to use (section 6.2). |
-| `--out DIR` | `./delivery-verify-report` | Where reports go. Refuses a folder inside TREE, because the report would become an "extra" file. |
+| `--out DIR` | `./manifest-doctor-report` | Where reports go. Refuses a folder inside TREE, because the report would become an "extra" file. |
 | `--sqlite` | off | Also write findings to `findings.sqlite`. |
 | `--hash-extras` | off | Also hash files that are not in any manifest. |
 
@@ -179,7 +179,7 @@ All are written to `--out`, which is never inside TREE:
 
 ## 8. Workflow profiles (`config.py`)
 
-Optional `delivery-verify.toml`. Each named profile can set: algorithm, prefix mode, name rules, hidden-file list, severity overrides, CSV column names. Example:
+Optional `manifest-doctor.toml`. Each named profile can set: algorithm, prefix mode, name rules, hidden-file list, severity overrides, CSV column names. Example:
 
 ```toml
 [profiles.cloud-delivery]
@@ -241,4 +241,4 @@ No network access anywhere. Sending the report to n8n is a separate step in Proj
 1. **Test tool:** pytest, a development-only install used only to run tests.
 2. **Failing level:** exit code `1` only when there are ERRORs. Warnings are reported but don't fail the run. Changeable per profile (`fail_on = "warning"`).
 3. **Extra files:** not hashed by default. The `--hash-extras` flag turns it on.
-4. **Names:** the command is `delivery-verify` and the Python package is `delivery_verify`.
+4. **Names:** the command is `manifest-doctor` and the Python package is `manifest_doctor`.

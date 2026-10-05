@@ -7,9 +7,9 @@ whose filesystem can't hold two names that differ only by case.
 
 import unicodedata
 
-from delivery_verify.manifest import Entry
-from delivery_verify.match import match_files
-from delivery_verify.scan import FileInfo
+from manifest_doctor.manifest import Entry
+from manifest_doctor.match import match_files
+from manifest_doctor.scan import FileInfo
 
 H1 = "0" * 32
 H2 = "1" * 32

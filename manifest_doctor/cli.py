@@ -25,12 +25,12 @@ def main(argv=None):
     try:
         return _check(args)
     except (ConfigError, ManifestError, ScanError) as error:
-        print(f"delivery-verify: error: {error}", file=sys.stderr)
+        print(f"manifest-doctor: error: {error}", file=sys.stderr)
         return 2
 
 
 def _parser():
-    parser = argparse.ArgumentParser(prog="delivery-verify",
+    parser = argparse.ArgumentParser(prog="manifest-doctor",
                                      description="Read-only manifest verification with probable-cause diagnosis.")
     commands = parser.add_subparsers(dest="command", required=True)
     check = commands.add_parser("check", help="verify a folder against one or more manifests")
@@ -42,8 +42,8 @@ def _parser():
     check.add_argument("--name-rules", dest="name_rules", choices=["windows", "strict"])
     check.add_argument("--hash-extras", dest="hash_extras", action="store_true", default=None)
     check.add_argument("--profile", help="named workflow profile from the settings file")
-    check.add_argument("--config", default="delivery-verify.toml", help="settings file (default: %(default)s)")
-    check.add_argument("--out", default="delivery-verify-report", help="where report folders go")
+    check.add_argument("--config", default="manifest-doctor.toml", help="settings file (default: %(default)s)")
+    check.add_argument("--out", default="manifest-doctor-report", help="where report folders go")
     check.add_argument("--sqlite", action="store_true", help="also write findings.sqlite")
     return parser
 
@@ -61,7 +61,7 @@ def _check(args):
     if args.strip_prefix is None and settings["prefix_mode"] == "suggest":
         stop_message = _absolute_path_stop(args.manifest, tree, settings["algorithm"])
         if stop_message:
-            print(f"delivery-verify: stopped: {stop_message}", file=sys.stderr)
+            print(f"manifest-doctor: stopped: {stop_message}", file=sys.stderr)
             return 2
 
     result = verify(tree, args.manifest, algorithm=settings["algorithm"],

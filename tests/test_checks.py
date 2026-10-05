@@ -4,11 +4,11 @@ import unicodedata
 
 import pytest
 
-from delivery_verify.checks import (check_cross_sets, check_extra, check_missing, check_names,
+from manifest_doctor.checks import (check_cross_sets, check_extra, check_missing, check_names,
                                     check_pairs, check_zero_byte)
-from delivery_verify.manifest import Entry, ManifestResult
-from delivery_verify.match import Pair
-from delivery_verify.scan import FileInfo
+from manifest_doctor.manifest import Entry, ManifestResult
+from manifest_doctor.match import Pair
+from manifest_doctor.scan import FileInfo
 
 H1 = "0" * 32
 H2 = "1" * 32

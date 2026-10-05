@@ -1,4 +1,4 @@
-# delivery-verify
+# manifest-doctor
 
 A read-only tool that checks a folder against its checksum manifest and explains **why** things don't match, not just **that** they don't.
 
@@ -35,13 +35,13 @@ Requires Python 3.11 or newer. The tool itself uses only the Python standard lib
 
 ```bash
 git clone <this repository>
-cd delivery-verify
+cd manifest-doctor
 
 # Make a synthetic sample delivery with one example of every problem
 python -m tools.make_fixtures
 
 # Check it
-python -m delivery_verify check fixtures_out/delivery --manifest fixtures_out/manifest_set1.md5 --manifest fixtures_out/manifest_set2.md5 --out fixtures_out/reports
+python -m manifest_doctor check fixtures_out/delivery --manifest fixtures_out/manifest_set1.md5 --manifest fixtures_out/manifest_set2.md5 --out fixtures_out/reports
 ```
 
 To run the tests (needs `pytest`, used for testing only):
@@ -86,8 +86,8 @@ Exit code: `1`. The full finding list (missing file, checksum mismatches, zero-b
 | `--strip-prefix TEXT` | – | Remove this start from every manifest path |
 | `--name-rules windows\|strict` | `windows` | Name rules: Windows-reserved characters (Microsoft), or a stricter list from Netflix's public footage-ingest guide. **A lint profile, not a certification of any platform's requirements.** |
 | `--hash-extras` | off | Also checksum files not in any manifest |
-| `--profile NAME`, `--config FILE` | – | Load a named profile from `delivery-verify.toml` |
-| `--out DIR` | `delivery-verify-report` | Where report folders go (refused if inside the checked folder) |
+| `--profile NAME`, `--config FILE` | – | Load a named profile from `manifest-doctor.toml` |
+| `--out DIR` | `manifest-doctor-report` | Where report folders go (refused if inside the checked folder) |
 | `--sqlite` | off | Also write `findings.sqlite` |
 
 Example profile file:

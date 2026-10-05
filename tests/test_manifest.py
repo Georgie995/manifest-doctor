@@ -6,7 +6,7 @@ Each test writes a small synthetic manifest into a temporary folder
 
 import pytest
 
-from delivery_verify.manifest import ManifestError, read_manifest
+from manifest_doctor.manifest import ManifestError, read_manifest
 
 # A made-up MD5 and SHA-256 value. Only the length and characters matter here.
 H1 = "0123456789abcdef0123456789abcdef"

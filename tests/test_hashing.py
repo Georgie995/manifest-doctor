@@ -2,8 +2,8 @@
 
 import hashlib
 
-from delivery_verify import hashing
-from delivery_verify.hashing import hash_file, hash_files
+from manifest_doctor import hashing
+from manifest_doctor.hashing import hash_file, hash_files
 
 
 def make(tmp_path, relative, content):

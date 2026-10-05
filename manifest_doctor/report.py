@@ -71,7 +71,7 @@ def _new_folder(out_dir, now):
 def _header(result, settings, sources, exit_code, counts, now):
     cross = result.cross_set.values()
     return {
-        "tool": "delivery-verify",
+        "tool": "manifest-doctor",
         "version": __version__,
         "run_at": now.isoformat(timespec="seconds"),
         "tree": str(Path(result.tree).resolve()),

@@ -135,10 +135,19 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Severity overrides** from a profile are applied to findings before the exit code is decided. Cause severities are not overridden. This is a known limit.
 - **CSV is written as UTF-8 with a byte-order mark,** so Excel shows accented names correctly. JSON keeps accented characters as they are rather than escaping them.
 - **Shortened summary lists:** `summary.md` lists up to 20 files per cause and 50 findings (configurable defaults), then points to `report.csv` for the full list.
-- **Runs without installing:** the tool works as `python -m delivery_verify` (via `__main__.py`), as well as the `delivery-verify` command once installed.
+- **Runs without installing:** the tool works as `python -m manifest_doctor` (via `__main__.py`), as well as the `manifest-doctor` command once installed.
 - **Odd characters can't crash it:** printing to a terminal that can't show a character (for example a combining accent on an older Windows console) shows a `\u…` code instead of crashing.
 
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
 - **Why:** this is a project rule (never rename, move or delete user files by default). A report written inside the tree would also show up as an extra file.
+
+## 2026-10-05: Project renamed from delivery-verify to manifest-doctor
+
+- **Decision:** rename the repository, Python package (`manifest_doctor`), command, settings file (`manifest-doctor.toml`) and default report folder.
+- **Why:** "doctor" is a familiar developer convention for "diagnose what's wrong" (for example `brew doctor`), which matches the headline feature. No PyPI package or GitHub project with this name was found on 2026-10-05.
+- **Rejected names:**
+  - names with "sleuth": strongly associated with The Sleuth Kit forensics tools;
+  - "delivery-doctor": search results are dominated by medical-delivery software.
+- **Approved by:** Georgi.

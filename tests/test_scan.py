@@ -2,8 +2,8 @@
 
 import pytest
 
-from delivery_verify import scan
-from delivery_verify.scan import ScanError, scan_tree
+from manifest_doctor import scan
+from manifest_doctor.scan import ScanError, scan_tree
 
 
 def make(tmp_path, relative, content=b"data"):

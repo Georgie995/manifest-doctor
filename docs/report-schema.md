@@ -6,7 +6,7 @@
 
 | Field | Type | Meaning |
 |---|---|---|
-| `tool` | string | Always `"delivery-verify"` |
+| `tool` | string | Always `"manifest-doctor"` |
 | `version` | string | Tool version, e.g. `"0.1.0"` |
 | `run_at` | string | Local date and time with UTC offset, ISO 8601, e.g. `"2026-10-05T18:32:05+01:00"` |
 | `tree` | string | Full path of the folder checked |

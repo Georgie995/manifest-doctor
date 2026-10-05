@@ -2,7 +2,7 @@
 
 Real failure modes from Georgi's work in ingest, tape archive and file delivery that this tool is designed around. They are written generically, with no client, project or product details.
 
-| # | Failure | How it showed up | What delivery-verify does about it |
+| # | Failure | How it showed up | What manifest-doctor does about it |
 |---|---|---|---|
 | 1 | File not fully ingested or corrupted | Silent. The recipient found it, because that workflow had no verify step before sending. | `HASH_MISMATCH`, run before sending |
 | 2 | Missing or extra files after an incomplete copy, or junk files included | Found by comparing file counts by hand | `MISSING` / `EXTRA`, with hidden files set aside |

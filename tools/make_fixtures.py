@@ -6,7 +6,7 @@ All names and contents are made up. Run it to get a folder to try the tool on:
 
 Then:
 
-    python -m delivery_verify check fixtures_out/delivery \
+    python -m manifest_doctor check fixtures_out/delivery \
         --manifest fixtures_out/manifest_set1.md5 --manifest fixtures_out/manifest_set2.md5 \
         --out fixtures_out/reports
 

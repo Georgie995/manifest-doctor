@@ -2,11 +2,11 @@
 
 import pytest
 
-from delivery_verify.config import ConfigError, resolve_settings
+from manifest_doctor.config import ConfigError, resolve_settings
 
 
 def write_config(tmp_path, text):
-    path = tmp_path / "delivery-verify.toml"
+    path = tmp_path / "manifest-doctor.toml"
     path.write_text(text, encoding="utf-8")
     return path
 

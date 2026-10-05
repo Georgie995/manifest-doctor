@@ -2,12 +2,12 @@
 
 import hashlib
 
-from delivery_verify.diagnose import diagnose
-from delivery_verify.findings import make_finding
-from delivery_verify.manifest import Entry
-from delivery_verify.match import MatchResult, Pair
-from delivery_verify.scan import FileInfo, ScanResult
-from delivery_verify.verify import verify
+from manifest_doctor.diagnose import diagnose
+from manifest_doctor.findings import make_finding
+from manifest_doctor.manifest import Entry
+from manifest_doctor.match import MatchResult, Pair
+from manifest_doctor.scan import FileInfo, ScanResult
+from manifest_doctor.verify import verify
 
 H1 = "0" * 32
 

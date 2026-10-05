@@ -6,8 +6,8 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 
-from delivery_verify.report import write_reports
-from delivery_verify.verify import verify
+from manifest_doctor.report import write_reports
+from manifest_doctor.verify import verify
 
 FIXED_TIME = datetime(2026, 10, 5, 18, 32, 5, tzinfo=timezone.utc)
 SETTINGS = {"algorithm": "md5", "prefix_mode": "suggest", "name_rules": "windows",

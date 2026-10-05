@@ -2,7 +2,7 @@
 
 import hashlib
 
-from delivery_verify.verify import verify
+from manifest_doctor.verify import verify
 
 
 def md5(data):
