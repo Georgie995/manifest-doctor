@@ -283,3 +283,87 @@ A file that is *both* in a wrapper folder *and* differs in Unicode or case isn't
 3. **Count the cross-set results.**
    - In `test_verify.py`, write a test with three manifests where one path appears in all three: two agree and one differs.
    - Predict the finding first, then run it.
+
+---
+
+## Module 4: diagnosis (`diagnose.py`)
+
+### What it does, step by step
+
+Modules 1–3 produce a list of findings, one per problem per file. With a wrapped delivery of 500 files, that's 500 near-identical warnings, which is exactly the "it listed everything as failed" problem. Module 4 reads the findings and asks: **is there one explanation that covers a whole group?**
+
+1. **Wrapper folder.** All files paired by pass 3 are grouped by *which* folder was ignored, and in which direction. Each group becomes one cause, such as "500 files only match once the folder `JobX/` on disk is ignored. This usually means the delivery was wrapped in an extra top-level folder", followed by the list of files.
+2. **Unicode form.** All Mac-vs-Windows accented-letter matches become one cause.
+3. **Upper/lower case.** All case-only matches become one cause, explaining why this matters on case-sensitive storage.
+4. **Duplicate listing.** All paths listed twice with different checksums become one ERROR cause: "Check which version was intended."
+5. **Hidden-file noise.** All system files that were set aside become one INFO cause.
+
+Then the causes are **sorted**: errors first, then warnings, then info. Within each level, the cause affecting the most files comes first.
+
+Every cause says **"Probable cause, not a verdict."** The tool can see a pattern; only a person can confirm why it happened. **The individual findings are all kept.** Causes are a summary on top, not a replacement, so nothing is hidden.
+
+### What it doesn't do (deliberately)
+
+There's no cause for checksum mismatches or missing files. They have many possible explanations (interrupted copy, re-export, wrong version, faulty media), and no pattern in the data reliably tells them apart. Guessing would be worse than saying nothing.
+
+### How it's tested
+
+`tests/test_diagnose.py`:
+- builds small sets of pairs and findings by hand and checks that each pattern produces exactly one cause, with the right files, severity and wording;
+- checks the ordering;
+- checks that every cause is labelled as a hint;
+- checks that a clean result gives no causes;
+- checks the grammar for one file versus several. A real slip ("1 file name differ") was caught in the demo output and fixed test-first.
+
+### Interview questions
+
+<details><summary>1. What problem does the diagnosis solve?</summary>
+Tools that say *that* something failed but not *why*. A wrapped delivery used to show up as hundreds of failures that someone had to untangle by hand. Now it's one line naming the folder, with the list of affected files.
+</details>
+
+<details><summary>2. Why keep the individual findings if you have causes?</summary>
+So nothing is hidden. The cause is a summary; the findings are the evidence. Someone can always check the cause against the detail.
+</details>
+
+<details><summary>3. Why "probable cause, not a verdict"?</summary>
+The tool sees a pattern in names and checksums. It can't know the history: who made the folder, or why. A person confirms. Overstating would push people to act on a guess.
+</details>
+
+<details><summary>4. Why is there no cause for checksum mismatches?</summary>
+Many different things produce a mismatch, and the data doesn't reliably distinguish them. A made-up cause would be guessing dressed up as analysis.
+</details>
+
+<details><summary>5. How are causes ordered, and why?</summary>
+Errors first, then warnings, then info; within each, the biggest group first. The person reading at the end of a long day sees the most important thing first.
+</details>
+
+<details><summary>6. What if files are wrapped in two different folders?</summary>
+Each folder (and direction) becomes its own cause, so two different packaging mistakes are never merged into one.
+</details>
+
+<details><summary>7. Can one file appear in two causes?</summary>
+Yes. A name that differs in both Unicode form and case appears under both, because both explanations apply.
+</details>
+
+<details><summary>8. How is this different from just counting findings by type?</summary>
+A count says "500 PREFIX_OFFSET_MATCH". A cause says *what they have in common* (the same folder `JobX/` on disk), *what that usually means*, and *which files*. That's the difference between a symptom and a diagnosis.
+</details>
+
+<details><summary>9. How do you know the cause wording is accurate?</summary>
+The claims are general platform behaviour with sources (for example, macOS drives being usually case-insensitive), and they're worded as "usually" or "typically". I also reviewed the wording on realistic demo output as an operator would.
+</details>
+
+<details><summary>10. What would you add next?</summary>
+A cause for "all missing files are in one folder" (a folder that wasn't copied). I'd want to see it in real-looking data first, though, to make sure it wouldn't mislead.
+</details>
+
+### Exercises: change this behaviour
+
+1. **Make hidden-file noise a WARNING.**
+   - Do this for a workflow where clutter must be cleaned before delivery.
+   - Which test needs updating?
+2. **Change the wording of the wrapper cause** to mention the recipient: "…the recipient's automation may not find these files".
+   - Update the test first.
+3. **Design (no code): a "whole folder missing" cause.**
+   - Write in `DECISIONS.md` how you'd detect that every missing file sits under the same folder.
+   - Say what wording you'd use, and what could make it misleading.

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from .checks import (check_cross_sets, check_extra, check_missing, check_names,
                      check_pairs, check_zero_byte)
+from .diagnose import diagnose
 from .hashing import hash_files
 from .manifest import read_manifest
 from .match import match_files
@@ -21,6 +22,7 @@ class VerificationResult:
     hashes: dict
     cross_set: dict
     findings: list
+    causes: list
 
 
 def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_prefix=None,
@@ -50,4 +52,5 @@ def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_p
                      unicode_matched_paths={p.file.path for p in match.pairs if "unicode" in p.kinds}),
         *cross_findings,
     ]
-    return VerificationResult(manifests, scan, match, hashes, cross_set, findings)
+    causes = diagnose(match, scan, findings)
+    return VerificationResult(manifests, scan, match, hashes, cross_set, findings, causes)

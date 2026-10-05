@@ -110,6 +110,22 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Confirmed: a wrapper folder stays a WARNING** (exit code 0). Georgi's judgement is that warnings are enough for this case.
 - **Confirmed: a zero-byte file stays an ERROR**, even when the manifest shows it was already empty at the source. There are no legitimate empty files in his deliveries.
 
+## 2026-10-05: Diagnosis details (module 4)
+
+- **Causes sit above findings.** Causes are added *above* the findings, not instead of them. The report keeps every individual finding so nothing is hidden, and the causes say what groups of findings have in common.
+- **Five causes:**
+  - wrapper folder: one cause per folder and direction;
+  - Unicode form;
+  - upper/lower case;
+  - duplicate listing;
+  - hidden-file noise.
+
+  A name that differs in both Unicode and case appears in both causes.
+- **Severity of a cause:** each cause carries the severity of the findings it explains (duplicate listing ERROR; wrapper, Unicode, case WARNING; hidden INFO). Causes are ordered most serious first, then by number of files.
+- **Hint, not verdict:** every cause carries the note "Probable cause, not a verdict." The wording says "usually" or "typically", never "this is".
+- **No cause for mismatches and missing files yet.** No single explanation reliably covers those, so they stay as individual findings. Inventing a cause would be guessing.
+- **Wording claims:** the claims in the cause text are general platform behaviour, not industry statistics. macOS drives are usually case-insensitive (rclone docs, https://rclone.org/overview/). Changing operating systems creates hidden system files (Netflix footage-ingest guide).
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
