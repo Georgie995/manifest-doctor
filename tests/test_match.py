@@ -66,6 +66,17 @@ def test_unicode_form_difference_is_paired_and_flagged():
     assert summary(result) == ([(CAFE_NFC, CAFE_NFD, ("unicode",))], [], [])
     assert codes(result) == ["UNICODE_ONLY_MATCH"]
     assert result.findings[0].path == CAFE_NFD
+    # Georgi's review: explain the difference in words, since the two names look identical.
+    detail = result.findings[0].detail
+    assert "manifest writes é as one character" in detail
+    assert "disk writes it as a letter plus a separate accent mark" in detail
+
+
+def test_unicode_wording_follows_the_direction_of_the_difference():
+    result = match_files([entry(CAFE_NFD)], [file(CAFE_NFC)])
+    detail = result.findings[0].detail
+    assert "disk writes é as one character" in detail
+    assert "manifest writes it as a letter plus a separate accent mark" in detail
 
 
 def test_case_only_difference_is_paired_and_flagged():

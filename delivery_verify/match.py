@@ -79,14 +79,30 @@ def _pass_written_differently(expected, actual, result):
         manifest_path, disk_path = expected_paths[0], actual_paths[0]
         kinds = _how_they_differ(manifest_path, disk_path)
         result.pairs.append(Pair(expected.pop(manifest_path), actual.pop(disk_path), kinds))
-        detail = f"manifest has {manifest_path!r}, disk has {disk_path!r}"
         if "unicode" in kinds:
             result.findings.append(make_finding(
-                "UNICODE_ONLY_MATCH", path=disk_path,
-                detail=detail + " (same letters, different Unicode form, e.g. macOS vs Windows)"))
+                "UNICODE_ONLY_MATCH", path=disk_path, detail=_unicode_explanation(manifest_path, disk_path)))
         if "case" in kinds:
             result.findings.append(make_finding(
-                "CASE_ONLY_MATCH", path=disk_path, detail=detail + " (differs only in upper/lower case)"))
+                "CASE_ONLY_MATCH", path=disk_path,
+                detail=f"manifest has {manifest_path!r}, disk has {disk_path!r} (differs only in upper/lower case)"))
+
+
+def _unicode_explanation(manifest_path, disk_path):
+    """Explain in words, because the two names look identical on screen (Georgi's review)."""
+    nfc = lambda p: unicodedata.normalize("NFC", p)
+    decomposed = lambda p: nfc(p) != p
+    accented = sorted({c for c in nfc(manifest_path + disk_path) if unicodedata.normalize("NFD", c) != c})
+    letters = ", ".join(accented)
+    pronoun = "it" if len(accented) == 1 else "them"
+    if decomposed(disk_path) and not decomposed(manifest_path):
+        one, split = "manifest", "disk"
+    elif decomposed(manifest_path) and not decomposed(disk_path):
+        one, split = "disk", "manifest"
+    else:
+        return "the names use the same letters stored in different Unicode forms"
+    return (f"the {one} writes {letters} as one character; the {split} writes {pronoun} as a letter "
+            "plus a separate accent mark (typical of macOS). The names look identical but are stored differently.")
 
 
 def _how_they_differ(manifest_path, disk_path):

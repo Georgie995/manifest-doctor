@@ -47,11 +47,20 @@ def check_pairs(pairs, hashes):
         actual = hashes.get(pair.file.path)
         if actual is None:
             continue  # couldn't be read: already reported as UNREADABLE
+        # Entries the file does match. With a duplicated path, this says which version is on disk.
+        matching = [e for e in pair.entries
+                    if e.hash == actual and (e.size is None or e.size == pair.file.size)]
         for entry in pair.entries:
             if entry.size is not None and entry.size != pair.file.size:
                 detail = f"size differs: manifest says {entry.size} bytes, disk has {pair.file.size} bytes"
             elif entry.hash != actual:
                 detail = "checksum differs from the manifest"
+                if matching:
+                    # Georgi's review: without this, a good file reads as a bad one.
+                    other = matching[0]
+                    where = (f"line {other.line}" if other.manifest == entry.manifest
+                             else f"line {other.line} of {other.manifest}")
+                    detail = f"the file matches {where}, not line {entry.line}"
             else:
                 continue
             findings.append(make_finding(
@@ -80,9 +89,15 @@ def check_zero_byte(files, pairs, algorithm):
 
 # --- Name hygiene ----------------------------------------------------------------------------
 
-def check_names(files, rules="windows"):
-    """Check each folder and file name once. Report problems and a proposed clean name."""
+def check_names(files, rules="windows", unicode_matched_paths=frozenset()):
+    """Check each folder and file name once. Report problems and a proposed clean name.
+
+    unicode_matched_paths: disk paths already reported as UNICODE_ONLY_MATCH. Their
+    Unicode form isn't repeated here (Georgi's review: one issue, one finding).
+    """
     bad_chars = NAME_RULES[rules]
+    already_explained = {"/".join(p.split("/")[:i + 1])
+                         for p in unicode_matched_paths for i in range(p.count("/") + 1)}
     findings, seen = [], set()
     for f in files:
         parts = f.path.split("/")
@@ -91,7 +106,8 @@ def check_names(files, rules="windows"):
             if partial_path in seen:
                 continue  # a bad folder is reported once, not for every file inside it
             seen.add(partial_path)
-            problems = _name_problems(name, bad_chars)
+            problems = _name_problems(name, bad_chars,
+                                      check_unicode=partial_path not in already_explained)
             if problems:
                 findings.append(make_finding(
                     "NAME_HYGIENE", path=partial_path, proposed_name=_clean_name(name, bad_chars),
@@ -99,7 +115,7 @@ def check_names(files, rules="windows"):
     return findings
 
 
-def _name_problems(name, bad_chars):
+def _name_problems(name, bad_chars, check_unicode=True):
     problems = []
     found = sorted({c for c in name if c in bad_chars})
     if found:
@@ -116,7 +132,7 @@ def _name_problems(name, bad_chars):
         problems.append("ends with a full stop")
     if name.split(".")[0].upper() in WINDOWS_RESERVED_NAMES:
         problems.append("uses a name reserved by Windows")
-    if unicodedata.normalize("NFC", name) != name:
+    if check_unicode and unicodedata.normalize("NFC", name) != name:
         problems.append("uses decomposed Unicode (NFD, typical of macOS)")
     return problems
 

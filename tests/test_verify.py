@@ -60,6 +60,14 @@ def test_wrapper_folder_delivery_matches_by_prefix_and_checks_hashes(tmp_path):
     assert sorted(f.code for f in result.findings) == ["PREFIX_OFFSET_MATCH", "PREFIX_OFFSET_MATCH"]
 
 
+def test_mac_style_name_gives_one_finding_not_two(tmp_path):
+    import unicodedata
+    nfc = unicodedata.normalize("NFC", "ShowA/Café/stem é.wav")
+    nfd = unicodedata.normalize("NFD", nfc)
+    tree, manifest = build(tmp_path, {nfd: b"audio"}, [f"{md5(b'audio')}  {nfc}"])
+    assert [f.code for f in verify(tree, [manifest]).findings] == ["UNICODE_ONLY_MATCH"]
+
+
 def test_extras_are_hashed_only_when_asked(tmp_path):
     tree, manifest = build(tmp_path, {"a.mov": b"aaa", "extra.mov": b"zzz"}, [f"{md5(b'aaa')}  a.mov"])
     [plain] = [f for f in verify(tree, [manifest]).findings if f.code == "EXTRA"]

@@ -75,6 +75,15 @@ def test_each_entry_of_a_duplicated_path_is_checked_separately():
     pair = Pair([entry("a.mov", H1, line=1), entry("a.mov", H2, line=2)], FileInfo("a.mov", 10), ["exact"])
     findings = check_pairs([pair], {"a.mov": H2})
     assert [(f.code, f.line, f.expected_hash) for f in findings] == [("HASH_MISMATCH", 1, H1)]
+    # Georgi's review: say the file matches the other entry, so it doesn't read as a bad file.
+    assert "matches line 2" in findings[0].detail
+    assert "not line 1" in findings[0].detail
+
+
+def test_plain_mismatch_wording_is_unchanged_when_no_entry_matches():
+    pair = Pair([entry("a.mov", H1, line=1)], FileInfo("a.mov", 10), ["exact"])
+    [finding] = check_pairs([pair], {"a.mov": H2})
+    assert finding.detail == "checksum differs from the manifest"
 
 
 # --- Zero-byte -------------------------------------------------------------------------
@@ -123,6 +132,19 @@ def test_decomposed_unicode_name_is_reported_and_normalised_in_the_proposal():
     nfd = unicodedata.normalize("NFD", "Café.mov")
     finding = hygiene([f"ShowA/{nfd}"])[f"ShowA/{nfd}"]
     assert finding.proposed_name == unicodedata.normalize("NFC", "Café.mov")
+
+
+def test_unicode_form_already_explained_by_a_match_is_not_repeated_as_a_name_problem():
+    # Georgi's review: the same issue reported twice was confusing.
+    nfd = unicodedata.normalize("NFD", "ShowA/Café/clip é.mov")
+    findings = check_names([FileInfo(nfd, 1)], "windows", unicode_matched_paths={nfd})
+    assert findings == []
+
+
+def test_other_name_problems_are_still_reported_for_a_unicode_matched_file():
+    nfd = unicodedata.normalize("NFD", "ShowA/ Café.mov")
+    [finding] = check_names([FileInfo(nfd, 1)], "windows", unicode_matched_paths={nfd})
+    assert finding.detail == "starts with a space"
 
 
 def test_a_bad_folder_name_is_reported_once_not_for_every_file_inside():

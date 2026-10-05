@@ -46,7 +46,8 @@ def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_p
         *check_extra(match.extra, hashes),
         *check_pairs(match.pairs, hashes),
         *check_zero_byte(scan.files, match.pairs, algorithm),
-        *check_names(scan.files, name_rules),
+        *check_names(scan.files, name_rules,
+                     unicode_matched_paths={p.file.path for p in match.pairs if "unicode" in p.kinds}),
         *cross_findings,
     ]
     return VerificationResult(manifests, scan, match, hashes, cross_set, findings)

@@ -101,6 +101,15 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Clean names can collide:** two different bad names can produce the same proposed name (e.g. `a?.mov` and `a*.mov` both become `a_.mov`). This is not detected yet. It is a known limit.
 - **Cross-set comparison:** it compares paths after tidying and prefix rules, but doesn't merge Unicode or case variants across manifests. Conflict wording always says the tool cannot tell which version is correct.
 
+## 2026-10-05: Changes from Georgi's mid-project review of real output
+
+Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wrapped delivery) as an operator would.
+
+- **Changed: the duplicate-version mismatch says which entry the file matches.** For example: "the file matches line 5, not line 4". Before, a good file read as a bad one.
+- **Changed: a Mac-style (NFD) name gives one finding, not two.** The `UNICODE_ONLY_MATCH` wording now explains the difference in words: "the manifest writes é as one character; the disk writes it as a letter plus a separate accent mark". The two names look identical on screen, so showing both explained nothing. The name-hygiene check no longer repeats the Unicode problem for a name already explained by a match. Other problems with that name are still reported.
+- **Confirmed: a wrapper folder stays a WARNING** (exit code 0). Georgi's judgement is that warnings are enough for this case.
+- **Confirmed: a zero-byte file stays an ERROR**, even when the manifest shows it was already empty at the source. There are no legitimate empty files in his deliveries.
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
