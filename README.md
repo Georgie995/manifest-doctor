@@ -141,8 +141,6 @@ All test data is synthetic. No client names, project or tape codes, hostnames or
 
 ## AI assistance
 
-> **DRAFT. Georgi to confirm or correct before publishing.**
-
 The code in this repository was written with an AI coding assistant (Claude, by Anthropic). I did not write the Python by hand.
 
 What I did:
