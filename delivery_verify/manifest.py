@@ -232,6 +232,27 @@ def _apply_prefix_rules(result, prefix_mode, strip_prefix):
         detail=f"all paths start with {prefix!r}; re-run with --strip-prefix {prefix!r}"))
 
 
+def best_prefix(manifest_paths, disk_paths):
+    """Choose the prefix to strip that makes the most manifest paths match real files.
+
+    Tries every folder level of the shared start, e.g. 'D:/', 'D:/Deliveries/',
+    'D:/Deliveries/ShowA/'. The longest shared folder can strip one level too many
+    (found in Georgi's module 1 quiz). Returns (prefix, number matched).
+    """
+    common = _common_folder(list(manifest_paths))
+    if common is None:
+        return None, 0
+    parts = common.rstrip("/").split("/")
+    candidates = ["/".join(parts[:i + 1]) + "/" for i in range(len(parts))]
+    disk = set(disk_paths)
+    scored = [(sum(p[len(c):] in disk for p in manifest_paths), c) for c in candidates]
+    best_count = max(count for count, _ in scored)
+    if best_count == 0:
+        return common, 0  # nothing fits: fall back to the longest shared folder
+    # Among equally good candidates, prefer the shortest: it removes the least information.
+    return next(c for count, c in scored if count == best_count), best_count
+
+
 def _strip(result, prefix):
     for entry in result.entries:
         if entry.path.startswith(prefix):

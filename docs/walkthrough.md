@@ -367,3 +367,114 @@ A cause for "all missing files are in one folder" (a folder that wasn't copied).
 3. **Design (no code): a "whole folder missing" cause.**
    - Write in `DECISIONS.md` how you'd detect that every missing file sits under the same folder.
    - Say what wording you'd use, and what could make it misleading.
+
+---
+
+## Module 5: reports and the command (`cli.py`, `config.py`, `report.py`)
+
+### What it does, step by step
+
+This module turns the engine (modules 1–4) into a tool you can type, or that n8n can call.
+
+1. **You type a command**, for example:
+   ```
+   python -m delivery_verify check D:/Incoming/ShowA --manifest ShowA.md5 --out D:/Reports
+   ```
+2. **Settings are worked out in three layers** (`config.py`):
+   1. built-in defaults;
+   2. a **workflow profile** from `delivery-verify.toml`, if you name one with `--profile`;
+   3. anything typed on the command line.
+
+   Each layer overrides the one before. The report records where every setting came from. A mistake in the settings file stops the tool with a clear message instead of being quietly ignored.
+3. **Safety checks before anything is read:**
+   - The report folder must not be inside the delivery, because the report would become an "extra" file.
+   - In **suggest** mode, if the manifest uses absolute paths (`D:\Deliveries\…`), the tool **stops with exit code 2**. It tries every possible prefix and tells you the one that makes the most paths match real files, e.g. `--strip-prefix "D:/Deliveries/"` (2 of 2 manifest paths then match). That fixes the "one folder too many" problem you found in the module 1 quiz.
+4. **The check runs** (modules 1–4).
+5. **Profile severity changes are applied** (e.g. a "tape-restore" profile can make EXTRA an ERROR).
+6. **The exit code is decided:**
+   - **0**: no ERRORs. With a profile setting `fail_on = "warning"`, no warnings either.
+   - **1**: problems found.
+   - **2**: the tool couldn't check (bad manifest, folder missing, bad settings, absolute paths in suggest mode).
+7. **Reports are written to a new dated folder** (`report.py`). Old reports are never touched.
+   - `report.json`: for automation. Its format is documented in `docs/report-schema.md`.
+   - `report.csv`: for Excel. It's saved so accented names display correctly.
+   - `summary.md`: the result line first, then the probable causes, then the findings. Long lists are shortened, with a pointer to the CSV.
+   - `findings.sqlite`: only with `--sqlite`.
+8. **A short summary is printed:** the result, the causes, and where the reports are.
+
+### SQL you can try on `findings.sqlite`
+
+```sql
+-- How many findings of each kind?
+SELECT code, COUNT(*) FROM findings GROUP BY code ORDER BY COUNT(*) DESC;
+
+-- Only the errors, with their paths
+SELECT path, code, detail FROM findings WHERE severity = 'ERROR';
+
+-- Which files does each probable cause cover?
+SELECT c.code, p.path FROM causes c JOIN cause_paths p ON p.cause_id = c.cause_id;
+```
+
+### How it's tested
+
+- `tests/test_config.py`: defaults, profiles overriding defaults, the command line overriding profiles, and every kind of settings mistake.
+- `tests/test_report.py`: dated folders (including two runs in the same second), JSON contents, CSV columns and the Excel marker, summary ordering and shortening, and SQLite queries.
+- `tests/test_cli.py`:
+  - exit codes 0, 1 and 2 in each situation;
+  - the report folder refused inside the delivery;
+  - the absolute-path stop choosing `D:/Deliveries/` rather than `D:/Deliveries/ShowA/`;
+  - following its advice gives a clean run;
+  - a real run as `python -m delivery_verify`.
+
+### Interview questions
+
+<details><summary>1. What do the three exit codes mean, and why does it matter?</summary>
+0 = checked, no errors. 1 = checked, problems found. 2 = couldn't check. Automation like n8n branches on this number, so "couldn't check" must never look like "clean".
+</details>
+
+<details><summary>2. Why a new folder for every run?</summary>
+So earlier reports are never overwritten, and there's always a history to go back to. It's the same principle as keeping a record of the original and the re-delivery.
+</details>
+
+<details><summary>3. Why stop on absolute paths instead of guessing?</summary>
+A wrong guess would turn every file into "missing" and "extra", which is a confident-looking but wrong report. The tool tests the possible prefixes against the real folder and tells you exactly what to type, with how many files would then match.
+</details>
+
+<details><summary>4. What's a workflow profile, and why have them?</summary>
+A named set of settings in a small text file. A cloud delivery and a tape restore need different rules (for example, extras may be fatal for one and fine for the other). A profile saves retyping and makes the rules visible and reviewable.
+</details>
+
+<details><summary>5. What happens if someone makes a typo in the settings file?</summary>
+The tool stops with exit code 2 and a message naming the setting. A silently ignored typo would mean running with rules you didn't intend.
+</details>
+
+<details><summary>6. Why is the CSV saved "with a byte-order mark"?</summary>
+It's an invisible marker at the start of the file that tells Excel the text is UTF-8. Without it, Excel can show `Café` as garbled characters.
+</details>
+
+<details><summary>7. Why does the report record where each setting came from?</summary>
+So a result can be traced. If a run passed that shouldn't have, you can see whether a profile or a typed option changed the rules.
+</details>
+
+<details><summary>8. What's in report.json, and who uses it?</summary>
+A header (result, exit code, counts, settings, manifests), the probable causes, and every finding with its details. It's for automation: Project 2's n8n workflow reads it. The format is documented in `docs/report-schema.md`.
+</details>
+
+<details><summary>9. Why refuse a report folder inside the delivery?</summary>
+The tool is read-only towards the delivery. A report written there would change the delivery and show up as an extra file next time.
+</details>
+
+<details><summary>10. Where does SQL come in?</summary>
+With `--sqlite`, the findings go into a small database file. You can then ask questions in SQL, for example "count findings by type" or "which files does each cause cover", which is handy across many runs or very large deliveries.
+</details>
+
+### Exercises: change this behaviour
+
+1. **Write a profile.**
+   - Create `delivery-verify.toml` with a `tape-restore` profile where EXTRA is an ERROR and `fail_on = "warning"`.
+   - Run a check with and without `--profile tape-restore`, and compare the exit codes.
+2. **Show the proposed name in the summary.**
+   - Make `summary.md` show the proposed clean name for NAME_HYGIENE findings. (Hint: `_write_summary`.)
+   - Write the test first in `test_report.py`.
+3. **Ask the database a question.**
+   - Run with `--sqlite`. Open `findings.sqlite` with any SQLite viewer (or Python), and write a query that lists every file with a WARNING, sorted by path.

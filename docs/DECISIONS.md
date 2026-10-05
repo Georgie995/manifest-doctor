@@ -126,6 +126,18 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **No cause for mismatches and missing files yet.** No single explanation reliably covers those, so they stay as individual findings. Inventing a cause would be guessing.
 - **Wording claims:** the claims in the cause text are general platform behaviour, not industry statistics. macOS drives are usually case-insensitive (rclone docs, https://rclone.org/overview/). Changing operating systems creates hidden system files (Netflix footage-ingest guide).
 
+## 2026-10-05: Reports and command line (module 5)
+
+- **A new dated folder every run** (`report-YYYY-MM-DD_HHMMSS`, with `-2`, `-3` if two runs share a second). Georgi's choice: old reports are never overwritten, so there's a full history.
+- **Absolute paths in suggest mode stop with exit code 2** (Georgi's choice), because nothing was really verified. The message names the prefix that makes the most manifest paths match files actually in the folder (approved fix from the module 1 quiz), and says how many match. If no prefix fits, it says so and suggests checking the folder. No report is written.
+- **Report folder inside the checked folder is refused** (exit code 2). The report would become an "extra" file in the delivery.
+- **Settings in three layers:** built-in defaults, then the profile, then the command line. Each value's source is recorded in the report header. Mistakes in the settings file (unknown setting, unknown finding code, invalid value, broken TOML) stop the tool with a clear message rather than being ignored.
+- **Severity overrides** from a profile are applied to findings before the exit code is decided. Cause severities are not overridden. This is a known limit.
+- **CSV is written as UTF-8 with a byte-order mark,** so Excel shows accented names correctly. JSON keeps accented characters as they are rather than escaping them.
+- **Shortened summary lists:** `summary.md` lists up to 20 files per cause and 50 findings (configurable defaults), then points to `report.csv` for the full list.
+- **Runs without installing:** the tool works as `python -m delivery_verify` (via `__main__.py`), as well as the `delivery-verify` command once installed.
+- **Odd characters can't crash it:** printing to a terminal that can't show a character (for example a combining accent on an older Windows console) shows a `\u…` code instead of crashing.
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.

@@ -23,6 +23,7 @@ class VerificationResult:
     cross_set: dict
     findings: list
     causes: list
+    tree: str
 
 
 def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_prefix=None,
@@ -53,4 +54,4 @@ def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_p
         *cross_findings,
     ]
     causes = diagnose(match, scan, findings)
-    return VerificationResult(manifests, scan, match, hashes, cross_set, findings, causes)
+    return VerificationResult(manifests, scan, match, hashes, cross_set, findings, causes, str(tree))
