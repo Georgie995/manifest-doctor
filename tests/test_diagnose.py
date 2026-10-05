@@ -69,6 +69,9 @@ def test_unicode_and_case_differences_each_become_one_cause():
 def test_wording_is_grammatical_for_a_single_file():
     causes = run(pairs=[pair("Café.mov", "Café.mov", ["unicode"]), pair("Clip.mov", "clip.mov", ["case"])])
     assert all("1 file name differs" in c.summary for c in causes)
+    for direction in ("extra_folder_on_disk", "extra_folder_in_manifest"):
+        [wrapper] = run(pairs=[pair("a.mov", "JobX/a.mov", ["prefix"], "JobX/", direction)])
+        assert wrapper.summary.startswith("1 file only matches once")
     [hidden] = run(hidden=["ShowA/.DS_Store"])
     assert hidden.summary.startswith("1 system file was set aside (it would otherwise have counted as an extra file)")
 
