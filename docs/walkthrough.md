@@ -98,3 +98,91 @@ No. The code is AI-assisted. I specified the formats and behaviours from real fa
 3. **Treat `#` lines as comments.**
    - Make lines starting with `#` be ignored rather than reported as unreadable.
    - Write the test first. Then think about whether this could hide a real file name starting with `#` in a pipe or CSV manifest, and record your answer in `DECISIONS.md`.
+
+---
+
+## Module 2: scanning the folder and calculating checksums (`scan.py`, `hashing.py`)
+
+### What it does, step by step
+
+Module 1 read the paperwork ("what should be here"). Module 2 looks at the shelf ("what is here").
+
+**Scanning (`scan.py`)**
+
+1. **Check the folder exists and is a folder.** If not, the tool stops with a `ScanError` (exit code 2), because there is nothing to verify.
+2. **Walk through every folder and sub-folder** with Python's `os.walk`, and record each file's path, relative to the folder being checked and always written with `/`, plus its size.
+3. **Set system clutter aside.** `.DS_Store`, `Thumbs.db`, `desktop.ini`, macOS `._` companion files, and anything inside folders like `.Spotlight-V100` or `.Trashes` go into a separate "hidden" list. Each gets an INFO note. They are never counted as extra files. Only this list is set aside, which you can change. An ordinary file starting with a dot is still checked, because it might be a real deliverable.
+4. **If a folder can't be opened, or a file's size can't be read,** the problem is recorded as `UNREADABLE` with the reason, and the scan **carries on**.
+5. **Sort everything by path**, so every run lists files in the same order.
+
+Nothing is opened, changed or moved during the scan. It only looks at names and sizes.
+
+**Hashing (`hashing.py`)**
+
+1. **`hash_file` reads a file in 1 MiB pieces** (about one million bytes). Each piece is fed into the checksum calculation and then forgotten, so a 500 GB file needs no more memory than a 1 KB file.
+2. **`hash_files` hashes a list of files in sorted order.** Reading in a steady, predictable order is kinder to tape-backed and network storage than jumping around.
+3. **If one file fails** (locked, permission denied, vanished, or a read error halfway through, like a bad section on media), it gets an `UNREADABLE` finding with the reason, and **the next file is still hashed**. This is the direct answer to the job that stalled and crashed on bad reads, and to the run that died on a permissions error.
+
+### How it's tested
+
+- `tests/test_scan.py` builds small made-up folders and checks the file list, the sizes, the hidden-file handling and the error handling.
+- `tests/test_hashing.py` checks:
+  - the answers against known checksums (the MD5 of `hello` is published everywhere);
+  - that reading in tiny pieces gives the same answer as reading all at once;
+  - the read order;
+  - that errors on one file don't stop the others.
+- Errors are **simulated**: the test swaps in a stand-in function that raises an error, because real locked files behave differently on each operating system.
+
+### Interview questions
+
+<details><summary>1. Why read files in pieces instead of all at once?</summary>
+Media files can be hundreds of gigabytes. Loading one whole would exhaust memory. Reading 1 MiB at a time keeps memory use flat, and the answer is identical. A test proves that.
+</details>
+
+<details><summary>2. How do you know the chunked checksum is correct?</summary>
+Tests compare it against known published values (for example the MD5 of `hello`, and of an empty file) and against Python's own all-at-once calculation using a deliberately tiny piece size.
+</details>
+
+<details><summary>3. What happens if one file can't be read in a run of 10,000?</summary>
+It gets an `UNREADABLE` finding with the operating system's reason, and the other 9,999 are still checked. The report says exactly which file failed and why. That's the opposite of a tool that reports "3 errors", stalls and crashes.
+</details>
+
+<details><summary>4. Why aren't all files starting with a dot treated as hidden?</summary>
+Only known system clutter is set aside. Treating every dot-file as hidden could hide a real deliverable from the check, which is a silent failure. The list is configurable.
+</details>
+
+<details><summary>5. Why sort the files?</summary>
+Repeatable reports (the same order every run), and a steadier read pattern. On tape-backed or network storage, random-order reads can be much slower than sequential ones.
+</details>
+
+<details><summary>6. Why isn't "folder doesn't exist" just another finding?</summary>
+If the folder isn't there, nothing was checked. Reporting "0 problems" would be false reassurance, so it's a tool error (exit code 2) instead.
+</details>
+
+<details><summary>7. How do you test a locked file without actually locking one?</summary>
+With pytest's `monkeypatch`, which temporarily swaps the real function for a stand-in that raises the same error the operating system would. Real permission changes behave differently on Windows, macOS and Linux, so this keeps tests reliable everywhere.
+</details>
+
+<details><summary>8. Does scanning change anything on disk?</summary>
+No. It only reads names and sizes, and hashing only reads contents. The tool is read-only by design.
+</details>
+
+<details><summary>9. Why are zero-byte files not flagged here?</summary>
+Each module has one job. The scan records sizes faithfully, including 0, and the checks in module 3 decide what's a problem. That keeps each part simple to test and explain.
+</details>
+
+<details><summary>10. What does the tool do with symbolic links (shortcuts)?</summary>
+Links to folders aren't followed, which avoids endless loops. A link to a file is checked as the file it points to. This is documented as a known limit.
+</details>
+
+### Exercises: change this behaviour
+
+1. **Add a hidden file.**
+   - Make `Icon\r` (the macOS custom-folder-icon file) count as system clutter.
+   - Write the test first by copying one of the `hidden_path` examples.
+2. **Change the piece size.**
+   - Change `CHUNK_SIZE` to 4 MiB.
+   - Which single test fails, and why is it right that it fails?
+3. **Make hidden files warnings.**
+   - Make `HIDDEN_FILE` a WARNING instead of INFO for a workflow where any clutter in a delivery is unacceptable.
+   - Where is the one place to change it?

@@ -73,6 +73,21 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **File-level problems:** a manifest that is empty, unreadable, not UTF-8, or has no recognisable lines raises `ManifestError`. That is a tool error (exit code 2), because a run without a usable manifest proves nothing.
 - **Mixed paths:** a mix of absolute and relative paths gets a finding but no suggested prefix, because no single prefix fits safely.
 
+## 2026-10-05: Smarter prefix suggestion (planned for module 5)
+
+- **Problem:** found in Georgi's module 1 quiz. Suggesting the *longest* shared folder can strip one folder too many. For example, when every file is under `D:/Deliveries/ShowA/` but the folder being checked still contains `ShowA/`.
+- **Decision:** when the CLI has both the manifest and the folder, it tries each candidate prefix and suggests the one that makes the most manifest paths match real files.
+- **Interim:** until module 5, module 1 suggests the longest shared folder, clearly labelled as a suggestion.
+- **Approved by Georgi:** 2026-10-05.
+
+## 2026-10-05: Scanning and hashing details (module 2)
+
+- **Hidden files:** only the configured list of system files is set aside (`.DS_Store`, `Thumbs.db`, `desktop.ini`, `._*`, and anything inside `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `.TemporaryItems`). Other names starting with a dot are checked like normal files. Treating every dot-file as hidden could hide a real deliverable.
+- **Zero-byte files:** the scan only records sizes. Zero-byte files are flagged by the checks in module 3, so each module has one job.
+- **Errors on one file or folder:** a folder that can't be listed, or a file whose size or contents can't be read, gives an `UNREADABLE` finding and the run continues. Only a missing or non-folder root is a tool error (exit code 2).
+- **Simulated errors in tests:** tests use simulated errors (pytest's `monkeypatch` swaps in a function that raises an error) rather than real locked files. Real permission changes behave differently on Windows, macOS and Linux, and would make the tests unreliable.
+- **Symbolic links:** links to folders are not followed (the `os.walk` default), which avoids loops. A link to a file is checked as the file it points to. This is a known limit.
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
