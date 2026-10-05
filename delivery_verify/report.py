@@ -129,7 +129,10 @@ def _write_summary(path, header, causes, findings):
         lines += ["| Severity | Code | Path | Detail |", "|---|---|---|---|"]
         for f in findings[:SUMMARY_FINDING_LIMIT]:
             where = f.path if f.path is not None else f"{f.manifest} line {f.line}"
-            lines.append(f"| {f.severity} | {f.code} | `{where}` | {_cell(f.detail)} |")
+            detail = f.detail
+            if f.proposed_name is not None:
+                detail += f" → proposed name: `{f.proposed_name}`"
+            lines.append(f"| {f.severity} | {f.code} | `{where}` | {_cell(detail)} |")
         if len(findings) > SUMMARY_FINDING_LIMIT:
             lines.append(f"\n… and {len(findings) - SUMMARY_FINDING_LIMIT} more findings (full list in report.csv)")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

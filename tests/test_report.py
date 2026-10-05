@@ -88,6 +88,17 @@ def test_markdown_summary_puts_the_result_and_causes_first(tmp_path):
     assert "ShowA/gone.mov" in text
 
 
+def test_summary_shows_the_proposed_clean_name_for_name_problems(tmp_path):
+    # Georgi's request after module 5: the suggestion should be visible without opening the CSV.
+    tree = tmp_path / "delivery"
+    tree.mkdir()
+    (tree / "clip  01.mov").write_bytes(b"x")
+    manifest = tmp_path / "m.md5"
+    manifest.write_text(f"{md5(b'x')}  clip  01.mov\n", encoding="utf-8")
+    text = (write(tmp_path, verify(tree, [manifest])) / "summary.md").read_text(encoding="utf-8")
+    assert "contains double spaces → proposed name: `clip 01.mov`" in text
+
+
 def test_long_lists_in_the_summary_are_shortened_with_a_pointer_to_the_full_report(tmp_path):
     tree = tmp_path / "delivery"
     lines = []
