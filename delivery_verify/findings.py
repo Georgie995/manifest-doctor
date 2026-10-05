@@ -38,6 +38,10 @@ class Finding:
     detail: str = ""
     manifest: str | None = None
     line: int | None = None
+    expected_hash: str | None = None
+    actual_hash: str | None = None
+    size: int | None = None
+    proposed_name: str | None = None  # a suggestion only; nothing is ever renamed
 
 
 def make_finding(code, **details):

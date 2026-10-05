@@ -186,3 +186,100 @@ Links to folders aren't followed, which avoids endless loops. A link to a file i
 3. **Make hidden files warnings.**
    - Make `HIDDEN_FILE` a WARNING instead of INFO for a workflow where any clutter in a delivery is unacceptable.
    - Where is the one place to change it?
+
+---
+
+## Module 3: matching and checks (`match.py`, `checks.py`, `verify.py`)
+
+### What it does, step by step
+
+Module 1 read "what should be here" and module 2 found "what is here". Module 3 lines them up and decides what's wrong.
+
+**Matching (`match.py`): three passes, like a person troubleshooting.**
+
+1. **Exact.** The manifest says `ShowA/a.mov` and the disk has `ShowA/a.mov`. Paired.
+2. **Same name, written differently.** Of what's left, pair names that are the same once you ignore:
+   - **Unicode form**: `Café` typed on a Mac vs on Windows. They look identical but are stored differently.
+   - **upper/lower case**: `Clip.MOV` vs `clip.mov`.
+   Each pair gets a WARNING saying exactly how the names differ.
+3. **Shifted by a folder.** Of what's still left, pair names that are the same once leading folders are ignored. For example, the disk has `JobX/Reel01/a.mov` and the manifest says `Reel01/a.mov`. This works in both directions: an extra folder on disk, or an extra folder in the manifest.
+
+**Never guess.** If two files fit equally well, the tool pairs neither and leaves them for a person to look at. A wrong pairing would be worse than no pairing, because it would hide a real problem behind a confident answer.
+
+Whatever is still unpaired at the end is genuinely **MISSING** (expected, not on disk) or **EXTRA** (on disk, not expected).
+
+**Checks (`checks.py`): one small function per check.**
+
+| Check | What it reports |
+|---|---|
+| `check_missing` | Each missing entry, with manifest name and line number |
+| `check_extra` | Each extra file (with its checksum, if `--hash-extras` was used) |
+| `check_pairs` | Checksum or size mismatch. Shows expected and actual checksum and the size. Each entry of a duplicated path is checked separately. |
+| `check_zero_byte` | 0-byte files. If the manifest's checksum is also the "empty file" checksum, it says the file was probably already empty at the source. |
+| `check_names` | Bad characters, spaces, trailing full stops, Windows-reserved names, Mac-style Unicode. Each folder or name is checked once and given a *proposed* clean name. Nothing is renamed. |
+| `check_cross_sets` | With two or more manifests, each path is `identical`, `conflicting` or `unique`. Conflicts are an ERROR whose wording says the tool cannot tell which version is right. |
+
+**Running it all (`verify.py`).** One function runs the steps in order: read manifests, scan, match, hash (paired files, plus extras only if asked), run checks, and collect every finding into one list.
+
+### How it's tested
+
+- `tests/test_match.py` uses plain lists of names, with no real files. That's how upper/lower-case differences can be tested on Windows, which can't hold two such files in one folder.
+- `tests/test_checks.py` tests each check on its own.
+- `tests/test_verify.py` builds small made-up deliveries on disk and runs everything end to end:
+  - a clean delivery gives no findings;
+  - a messy one gives exactly the expected findings, and nothing else;
+  - a wrapper-folder delivery still has its checksums verified.
+
+### Interview questions
+
+<details><summary>1. Why match in three passes instead of all at once?</summary>
+So each file ends up with exactly one explanation, the simplest one that fits. Exact first, then "written differently", then "shifted by a folder". Each pass only sees what the earlier passes couldn't explain.
+</details>
+
+<details><summary>2. What happens when two files could match one manifest entry?</summary>
+Nothing is paired. Both stay as missing/extra for a person to look at. A wrong automatic match would hide a real problem.
+</details>
+
+<details><summary>3. How does the tool cope with a delivery wrapped in an extra folder?</summary>
+Pass 3 notices that `JobX/Reel01/a.mov` on disk is `Reel01/a.mov` from the manifest with `JobX/` in front. The files are paired, their checksums are still verified, and each gets a WARNING naming the folder. Module 4 will group these into one "wrapper folder" cause.
+</details>
+
+<details><summary>4. Why compare size before checksum?</summary>
+If a CSV manifest records sizes, a different size already proves the file is different. The checksum is still calculated so the report shows both values.
+</details>
+
+<details><summary>5. A file couldn't be read. Why isn't it also reported as a checksum mismatch?</summary>
+There's no checksum to compare. Calling it a mismatch would be a second, wrong explanation. It already has the right one: UNREADABLE, with the reason.
+</details>
+
+<details><summary>6. What does the zero-byte check add beyond "this file is empty"?</summary>
+If the manifest's checksum is the well-known checksum of an empty file, the file was probably already empty when the manifest was made. That points the investigation upstream, to the source or the media written, rather than at the copy.
+</details>
+
+<details><summary>7. Does the tool rename badly named files?</summary>
+No. It reports the problem and *proposes* a clean name. Renaming is a deliberate step for a person (or a separate tool) to do, with a record. A verifier must see names exactly as they are.
+</details>
+
+<details><summary>8. Why is a bad folder name reported once, not for every file inside?</summary>
+A folder holding 3,000 files would otherwise produce 3,000 identical findings and bury everything else. One finding at the folder says the same thing clearly.
+</details>
+
+<details><summary>9. What does "cross-set conflict" mean, and what can't the tool tell you?</summary>
+The same path has different checksums in different manifests, for example two tapes or two deliveries. The tool shows each set's checksum. It can't know which version is correct, or when they diverged, and the wording says so.
+</details>
+
+<details><summary>10. Name a known limit of the matching.</summary>
+A file that is *both* in a wrapper folder *and* differs in Unicode or case isn't paired, because pass 3 doesn't combine with pass 2. Also, two different bad names can produce the same proposed clean name, and this isn't detected yet.
+</details>
+
+### Exercises: change this behaviour
+
+1. **Make extra files errors.**
+   - Make an extra file an ERROR for a workflow where nothing unexpected may be delivered.
+   - Find the one line to change, run the tests, and note which test needs updating and why.
+2. **Spot a new reserved name.**
+   - Add `CLOCK$` to the Windows reserved names. (Older Windows versions reserved it.)
+   - Write the test first in `test_checks.py` by adding a line to the `bad_name, proposed` list.
+3. **Count the cross-set results.**
+   - In `test_verify.py`, write a test with three manifests where one path appears in all three: two agree and one differs.
+   - Predict the finding first, then run it.

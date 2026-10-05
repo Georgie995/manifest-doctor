@@ -88,6 +88,19 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Simulated errors in tests:** tests use simulated errors (pytest's `monkeypatch` swaps in a function that raises an error) rather than real locked files. Real permission changes behave differently on Windows, macOS and Linux, and would make the tests unreliable.
 - **Symbolic links:** links to folders are not followed (the `os.walk` default), which avoids loops. A link to a file is checked as the file it points to. This is a known limit.
 
+## 2026-10-05: Matching and checks details (module 3)
+
+- **No guessing:** when two files are equally good candidates in pass 2 or 3, nothing is paired and both stay missing/extra. A wrong pairing would hide a real problem behind a confident-looking explanation.
+- **Wrapper folders:** pass 3 accepts any number of leading folders, not only one. When two manifest paths could claim the same file, the longer (more specific) path wins.
+- **Pass 3 limit:** pass 3 doesn't combine with pass 2. A file that is *both* in a wrapper folder *and* differs in Unicode or case stays unpaired. This is a known limit.
+- **Size before checksum:** a size difference counts as a mismatch even before the checksum is compared. The file is still hashed so both checksums appear in the report.
+- **No double explanations:** a file that couldn't be read isn't also called a mismatch. It already has one correct explanation (UNREADABLE).
+- **Duplicate listings:** each entry of a duplicated path is checked separately against the file. In the cloud-overwrite case, the older entry fails, just as the client's check did.
+- **Zero-byte hint:** when a zero-byte file's manifest checksum is also the "empty file" checksum, the detail says it was probably empty at the source. That points the investigation upstream (Georgi's F3).
+- **Name problems:** each folder or file name is checked once. A bad folder name gives one finding, not one per file inside it. The proposed clean name is text only.
+- **Clean names can collide:** two different bad names can produce the same proposed name (e.g. `a?.mov` and `a*.mov` both become `a_.mov`). This is not detected yet. It is a known limit.
+- **Cross-set comparison:** it compares paths after tidying and prefix rules, but doesn't merge Unicode or case variants across manifests. Conflict wording always says the tool cannot tell which version is correct.
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
