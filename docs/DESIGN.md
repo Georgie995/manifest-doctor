@@ -81,7 +81,9 @@ Rules:
 
 - Lines that can't be understood are **not silently skipped**. Each one becomes a `MANIFEST_LINE_UNREADABLE` finding with the manifest name and line number.
 - Paths are tidied for comparison only: `\` becomes `/`, and a leading `./` is removed. The original text is kept for the report.
-- The same path listed twice with **different** hashes gives `DUPLICATE_ENTRY` (Georgi's S3 case). Listed twice with the same hash, it is only counted once (INFO).
+- The same path listed twice with **different** hashes gives `DUPLICATE_ENTRY` (Georgi's S3 case). Listed twice with the same hash, it is only counted once (`DUPLICATE_SAME_HASH`, INFO).
+- Known limit: GNU md5sum "escapes" names containing a backslash or newline by starting the line with `\`. Those lines are not decoded. They are reported as `MANIFEST_LINE_UNREADABLE`, not skipped.
+- Known limit: a `\` is always treated as a folder separator, so a macOS file name that really contains a backslash would be misread.
 
 ### 5.2 Scan the tree (`scan.py`)
 
@@ -135,6 +137,7 @@ Whatever is still unpaired at the end is a genuine `MISSING` (expected but not o
 | `NAME_HYGIENE` | Problem characters or spacing in a name (section 6.2), with a *proposed* clean name. Nothing is renamed. | WARNING |
 | `ABSOLUTE_PATHS_DETECTED` | Manifest paths are absolute (see 5.3) | WARNING |
 | `HIDDEN_FILE` | System or hidden file, set aside | INFO |
+| `DUPLICATE_SAME_HASH` | Same path listed twice in one manifest with the same hash. Harmless, so it is kept once and noted. | INFO |
 
 Severities are Georgi's "strict" choice and can be changed per profile.
 

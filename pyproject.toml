@@ -1,0 +1,18 @@
+[project]
+name = "delivery-verify"
+version = "0.1.0"
+description = "Read-only manifest verifier that groups findings into probable causes."
+requires-python = ">=3.11"
+dependencies = []  # standard library only, by design
+
+[project.optional-dependencies]
+dev = ["pytest"]  # used only to run the tests
+
+[project.scripts]
+delivery-verify = "delivery_verify.cli:main"
+
+[tool.pytest.ini_options]
+# Lets the tests import delivery_verify straight from this folder,
+# without installing the package first.
+pythonpath = ["."]
+testpaths = ["tests"]

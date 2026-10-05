@@ -65,6 +65,14 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Alternatives:** always hash them.
 - **Why:** it saves time on large deliveries. The flag is there when you need to check whether an "extra" is really a renamed expected file.
 
+## 2026-10-05: Manifest parsing details (module 1)
+
+- **Spaces:** spaces in paths are never trimmed. Leading and double spaces are a hygiene finding for later, and trimming them would hide it.
+- **md5sum separator:** the strict md5sum separator (`hash` + space + space-or-`*`) is tried first, then a single space. This keeps a file name that really starts with a space intact.
+- **Duplicate listings:** a duplicate path with a different hash keeps *both* entries, so later checks can show each version. With the same hash, it is collapsed to one entry with an INFO note.
+- **File-level problems:** a manifest that is empty, unreadable, not UTF-8, or has no recognisable lines raises `ManifestError`. That is a tool error (exit code 2), because a run without a usable manifest proves nothing.
+- **Mixed paths:** a mix of absolute and relative paths gets a finding but no suggested prefix, because no single prefix fits safely.
+
 ## 2026-10-05: Read-only tool
 
 - **Decision:** never modify the tree being checked. The report folder can't be inside it.
