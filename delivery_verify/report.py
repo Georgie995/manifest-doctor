@@ -31,6 +31,12 @@ def sorted_findings(findings):
     return sorted(findings, key=lambda f: (_ORDER[f.severity], f.code, f.path or ""))
 
 
+def counts_text(counts):
+    """e.g. '1 error, 3 warnings, 0 info'."""
+    plural = lambda n, word: f"{n} {word}" if n == 1 else f"{n} {word}s"
+    return f"{plural(counts[ERROR], 'error')}, {plural(counts[WARNING], 'warning')}, {counts[INFO]} info"
+
+
 def count_by_severity(findings):
     return {level: sum(f.severity == level for f in findings) for level in (ERROR, WARNING, INFO)}
 
@@ -102,8 +108,7 @@ def _write_summary(path, header, causes, findings):
     lines = [
         "# Delivery verification summary",
         "",
-        f"**RESULT: {header['result']}** "
-        f"({counts[ERROR]} errors, {counts[WARNING]} warnings, {counts[INFO]} info)",
+        f"**RESULT: {header['result']}** ({counts_text(counts)})",
         "",
         f"- Folder checked: `{header['tree']}`",
         f"- Run at: {header['run_at']}",

@@ -11,7 +11,7 @@ from pathlib import Path
 from .config import ConfigError, resolve_settings
 from .findings import ERROR, WARNING
 from .manifest import ManifestError, best_prefix, read_manifest
-from .report import count_by_severity, result_label, write_reports
+from .report import count_by_severity, counts_text, result_label, write_reports
 from .scan import ScanError, scan_tree
 from .verify import verify
 
@@ -102,8 +102,7 @@ def _absolute_path_stop(manifest_paths, tree, algorithm):
 
 def _print_summary(result, exit_code, folder):
     counts = count_by_severity(result.findings)
-    print(f"RESULT: {result_label(exit_code, counts)} "
-          f"({counts[ERROR]} errors, {counts[WARNING]} warnings, {counts['INFO']} info)")
+    print(f"RESULT: {result_label(exit_code, counts)} ({counts_text(counts)})")
     for cause in result.causes:
         print(f"  {cause.severity}: {cause.summary}")
     print(f"Reports: {folder}")

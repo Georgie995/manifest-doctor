@@ -44,6 +44,12 @@ def test_errors_exit_1(tmp_path, capsys):
     assert "PROBLEMS FOUND" in capsys.readouterr().out
 
 
+def test_counts_are_grammatical(tmp_path, capsys):
+    tree, manifest = delivery(tmp_path, {"a.mov": b"changed", "x.mov": b"z"}, [f"{md5(b'aaa')}  a.mov"])
+    run(tmp_path, tree, manifest)
+    assert "(1 error, 1 warning, 0 info)" in capsys.readouterr().out
+
+
 def test_warnings_only_exit_0_by_default(tmp_path):
     tree, manifest = delivery(tmp_path, {"a.mov": b"aaa", "extra.mov": b"z"}, [f"{md5(b'aaa')}  a.mov"])
     assert run(tmp_path, tree, manifest) == 0
