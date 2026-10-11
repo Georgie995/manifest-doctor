@@ -151,3 +151,7 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
   - names with "sleuth": strongly associated with The Sleuth Kit forensics tools;
   - "delivery-doctor": search results are dominated by medical-delivery software.
 - **Approved by:** Georgi.
+
+## 2026-10-11: Mismatch wording names both manifests
+
+- **Change:** when the file matches an entry in *another* manifest, the detail now names both, e.g. "the file matches line 1 of set1.md5, not line 1 of set2.md5". Before, it ended "…not line 1", which didn't say which manifest. Found while building ai-triage's harness cases. Manifest file names are shown, not full local paths.

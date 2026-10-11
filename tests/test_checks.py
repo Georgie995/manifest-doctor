@@ -80,6 +80,15 @@ def test_each_entry_of_a_duplicated_path_is_checked_separately():
     assert "not line 1" in findings[0].detail
 
 
+def test_mismatch_against_another_manifest_names_both_manifests():
+    # Found while building ai-triage's cases: "matches line 1 of set1.md5, not line 1" didn't
+    # say which manifest the failing line belongs to.
+    pair = Pair([entry("a.mov", H1, manifest="C:/jobs/set2.md5", line=1),
+                 entry("a.mov", H2, manifest="C:/jobs/set1.md5", line=1)], FileInfo("a.mov", 10), ["exact"])
+    [finding] = check_pairs([pair], {"a.mov": H2})
+    assert finding.detail == "the file matches line 1 of set1.md5, not line 1 of set2.md5"
+
+
 def test_plain_mismatch_wording_is_unchanged_when_no_entry_matches():
     pair = Pair([entry("a.mov", H1, line=1)], FileInfo("a.mov", 10), ["exact"])
     [finding] = check_pairs([pair], {"a.mov": H2})

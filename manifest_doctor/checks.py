@@ -5,6 +5,7 @@ Each check is a small function with one job, so it can be tested and explained a
 
 import hashlib
 import unicodedata
+from pathlib import Path
 
 from .findings import make_finding
 
@@ -58,9 +59,12 @@ def check_pairs(pairs, hashes):
                 if matching:
                     # Georgi's review: without this, a good file reads as a bad one.
                     other = matching[0]
-                    where = (f"line {other.line}" if other.manifest == entry.manifest
-                             else f"line {other.line} of {other.manifest}")
-                    detail = f"the file matches {where}, not line {entry.line}"
+                    if other.manifest == entry.manifest:
+                        detail = f"the file matches line {other.line}, not line {entry.line}"
+                    else:
+                        # Different manifests: name both, or "not line 1" is ambiguous.
+                        detail = (f"the file matches line {other.line} of {Path(other.manifest).name}, "
+                                  f"not line {entry.line} of {Path(entry.manifest).name}")
             else:
                 continue
             findings.append(make_finding(
