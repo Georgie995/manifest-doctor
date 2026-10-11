@@ -155,3 +155,18 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 ## 2026-10-11: Mismatch wording names both manifests
 
 - **Change:** when the file matches an entry in *another* manifest, the detail now names both, e.g. "the file matches line 1 of set1.md5, not line 1 of set2.md5". Before, it ended "…not line 1", which didn't say which manifest. Found while building ai-triage's harness cases. Manifest file names are shown, not full local paths.
+
+## 2026-10-11: An opt-in progress file, for the Delivery Desk app
+
+- **Need:** the Delivery Desk app (a desktop window over delivery-desk) shows real progress while a delivery is checked: files done, the current file, time left. Georgi chose real progress over a spinner, because "is it still going, and how long left?" is the exact anxiety behind job-watch.
+- **Decision:** `--progress-file PATH`, off by default. While checking, it keeps a small JSON file up to date:
+  - fields: `stage` (preparing, hashing, finished), `files_done`/`files_total`, `bytes_done`/`bytes_total`, `current_file`, `updated_at`;
+  - written at most about 4 times a second;
+  - each update goes to a temporary copy first and is then swapped in, so a reader never sees half a file;
+  - "finished" is written only after the reports are on disk.
+- **Why a file and not printed lines:** when alerts are on, delivery-ops-hub runs manifest-doctor and keeps its printed output until the end. It already passes extra options through unchanged, so a file works on both routes with no change to delivery-ops-hub.
+- **Safety:**
+  - a progress file inside the delivery is refused, because it would turn up as an "extra" file;
+  - a write that fails is skipped with one warning, and the check carries on, because the report is what matters;
+  - with the option off, file reading is called exactly as before, and the original 149 tests pass unchanged.
+- **Tested by:** 10 new tests, checked by breaking 7 protections on purpose. Two of those breaks were missed at first (warn-once, swap-in-whole), so the tests were strengthened until both were caught.

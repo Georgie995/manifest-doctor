@@ -27,7 +27,7 @@ class VerificationResult:
 
 
 def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_prefix=None,
-           name_rules="windows", hash_extras=False):
+           name_rules="windows", hash_extras=False, progress=None):
     manifests = [read_manifest(p, algorithm, prefix_mode, strip_prefix) for p in manifest_paths]
     scan = scan_tree(tree)
     entries = [e for m in manifests for e in m.entries]
@@ -37,7 +37,10 @@ def verify(tree, manifest_paths, algorithm="md5", prefix_mode="suggest", strip_p
     to_hash = [p.file.path for p in match.pairs]
     if hash_extras:
         to_hash += [f.path for f in match.extra]
-    hashes, hash_findings = hash_files(tree, to_hash, algorithm)
+    if progress:
+        sizes = {f.path: f.size for f in scan.files}
+        progress.start_hashing(len(to_hash), sum(sizes.get(p, 0) for p in to_hash))
+    hashes, hash_findings = hash_files(tree, to_hash, algorithm, progress=progress)
 
     cross_set, cross_findings = check_cross_sets(manifests)
     findings = [

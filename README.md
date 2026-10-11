@@ -89,6 +89,7 @@ Exit code: `1`. The full finding list (missing file, checksum mismatches, zero-b
 | `--profile NAME`, `--config FILE` | – | Load a named profile from `manifest-doctor.toml` |
 | `--out DIR` | `manifest-doctor-report` | Where report folders go (refused if inside the checked folder) |
 | `--sqlite` | off | Also write `findings.sqlite` |
+| `--progress-file PATH` | off | Keep a small JSON file up to date with how far the check has got (files and bytes done, the current file), for apps that show a progress bar. It must be outside the folder being checked. A problem writing it never stops the check. |
 
 Example profile file:
 

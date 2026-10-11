@@ -11,6 +11,7 @@ from pathlib import Path
 from .config import ConfigError, resolve_settings
 from .findings import ERROR, WARNING
 from .manifest import ManifestError, best_prefix, read_manifest
+from .progress import ProgressFile
 from .report import count_by_severity, counts_text, result_label, write_reports
 from .scan import ScanError, scan_tree
 from .verify import verify
@@ -45,6 +46,8 @@ def _parser():
     check.add_argument("--config", default="manifest-doctor.toml", help="settings file (default: %(default)s)")
     check.add_argument("--out", default="manifest-doctor-report", help="where report folders go")
     check.add_argument("--sqlite", action="store_true", help="also write findings.sqlite")
+    check.add_argument("--progress-file", dest="progress_file",
+                       help="keep a small JSON file up to date with how far the check has got (for apps)")
     return parser
 
 
@@ -57,6 +60,10 @@ def _check(args):
     if out.resolve().is_relative_to(tree.resolve()):
         # A report written inside the delivery would itself become an "extra" file.
         raise ScanError(f"report folder {out} is inside the folder being checked; choose another --out")
+    if args.progress_file and Path(args.progress_file).resolve().is_relative_to(tree.resolve()):
+        # Same reason: it would turn up as an "extra" file in the delivery.
+        raise ScanError(f"progress file {args.progress_file} is inside the folder being checked; "
+                        "choose another --progress-file")
 
     if args.strip_prefix is None and settings["prefix_mode"] == "suggest":
         stop_message = _absolute_path_stop(args.manifest, tree, settings["algorithm"])
@@ -64,9 +71,10 @@ def _check(args):
             print(f"manifest-doctor: stopped: {stop_message}", file=sys.stderr)
             return 2
 
+    progress = ProgressFile(args.progress_file) if args.progress_file else None
     result = verify(tree, args.manifest, algorithm=settings["algorithm"],
                     prefix_mode=settings["prefix_mode"], strip_prefix=args.strip_prefix,
-                    name_rules=settings["name_rules"], hash_extras=settings["hash_extras"])
+                    name_rules=settings["name_rules"], hash_extras=settings["hash_extras"], progress=progress)
 
     for finding in result.findings:
         finding.severity = settings["severity"].get(finding.code, finding.severity)
@@ -74,6 +82,8 @@ def _check(args):
     exit_code = 1 if any(f.severity in failing for f in result.findings) else 0
 
     folder = write_reports(result, out, settings, sources, exit_code, sqlite=args.sqlite)
+    if progress:
+        progress.finish()  # "finished" only once the reports are on disk
     _print_summary(result, exit_code, folder)
     return exit_code
 
