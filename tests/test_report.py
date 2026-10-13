@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 
@@ -97,6 +98,20 @@ def test_summary_shows_the_proposed_clean_name_for_name_problems(tmp_path):
     manifest.write_text(f"{md5(b'x')}  clip  01.mov\n", encoding="utf-8")
     text = (write(tmp_path, verify(tree, [manifest])) / "summary.md").read_text(encoding="utf-8")
     assert "contains double spaces → proposed name: `clip 01.mov`" in text
+
+
+def test_a_pipe_in_a_file_name_does_not_break_the_summary_table(tmp_path):
+    # Linux and macOS allow "|" in names. Unescaped, it would split the row into an extra column.
+    tree = tmp_path / "delivery"
+    tree.mkdir()
+    manifest = tmp_path / "m.md5"
+    manifest.write_text(f"{md5(b'gone')}  ShowA/a|b.mov\n", encoding="utf-8")
+    text = (write(tmp_path, verify(tree, [manifest])) / "summary.md").read_text(encoding="utf-8")
+    rows = [line for line in text.splitlines() if line.startswith("| ") and "b.mov" in line]
+    assert rows
+    for row in rows:
+        assert len(re.findall(r"(?<!\\)\|", row)) == 5      # four cells: five unescaped dividers
+    assert "`ShowA/a\\|b.mov`" in text
 
 
 def test_long_lists_in_the_summary_are_shortened_with_a_pointer_to_the_full_report(tmp_path):

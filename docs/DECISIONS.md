@@ -170,3 +170,13 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
   - a write that fails is skipped with one warning, and the check carries on, because the report is what matters;
   - with the option off, file reading is called exactly as before, and the original 149 tests pass unchanged.
 - **Tested by:** 10 new tests, checked by breaking 7 protections on purpose. Two of those breaks were missed at first (warn-once, swap-in-whole), so the tests were strengthened until both were caught.
+
+## 2026-10-13: A "|" in a file name no longer breaks the summary or the pipe format, and CI runs on Linux too
+
+- **Found by:** an outside review of the repo. Linux and macOS allow `|` in file names (Windows doesn't).
+- **The summary table:** `summary.md` shows findings as a Markdown table, where `|` divides the columns. The Detail column was already protected, but the Path column wasn't, so a name with `|` split its row into an extra column. The Path is now protected the same way (`\|`).
+- **The pipe format:** a line was only read if it had exactly one `|`, so `ShowA/a|b.mov|hash` was reported as unreadable. The checksum is always at one end of the line, so it is now taken from the end (or, failing that, the start), and everything else is the name.
+- **Trade-off, accepted:** a line with an extra column next to the name (e.g. `path|size|hash`) is now read with that column as part of the name. It is still loud: the file is reported missing, under a name that shows the extra column, and the real file shows as extra. A line with an extra column *after* the checksum (`path|hash|size`) is still unreadable. I don't know of pipe manifests with extra columns; if they turn up, this should be tightened.
+- **CI:** the tests now run on GitHub's Linux and Windows machines, with Python 3.11 and 3.13, after every push. Before this, they had only ever run on Windows.
+- **Tested by:** 3 new tests, shown failing first (one is a guard that passes before and after, so the fix can't go too far). 4 breaks made on purpose were each caught: the Path left unprotected, the checksum read only from the end, the line split at the first `|`, and a greedy version that takes a checksum from anywhere in the line.
+- **Approved by:** Georgi (step 1 of the review plan).

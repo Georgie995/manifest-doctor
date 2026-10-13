@@ -51,6 +51,23 @@ def test_pipe_style_is_detected(tmp_path):
     assert result.entries[0].hash == H1
 
 
+def test_a_pipe_inside_a_file_name_does_not_stop_the_line_being_read(tmp_path):
+    # Linux and macOS allow "|" in file names. The checksum is always at one end of the line.
+    m = write(tmp_path, f"ShowA/a|b.mov|{H1}\n{H2}|ShowA/c|d.mov\n")
+    result = read_manifest(m)
+    assert result.format == "pipe"
+    assert [(e.path, e.hash) for e in result.entries] == [("ShowA/a|b.mov", H1), ("ShowA/c|d.mov", H2)]
+    assert codes(result) == []
+
+
+def test_a_pipe_line_with_no_checksum_at_either_end_is_still_unreadable(tmp_path):
+    # An extra column after the checksum (here a size) is not swallowed into the name.
+    m = write(tmp_path, f"ShowA/a.mov|{H1}\nShowA/b.mov|{H2}|1024\n")
+    result = read_manifest(m)
+    assert [e.path for e in result.entries] == ["ShowA/a.mov"]
+    assert codes(result) == ["MANIFEST_LINE_UNREADABLE"]
+
+
 def test_csv_with_header_in_any_column_order(tmp_path):
     m = write(tmp_path, f"size,md5,path\n1024,{H1},ShowA/clip_0001.mov\n")
     result = read_manifest(m)

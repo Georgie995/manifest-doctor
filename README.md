@@ -1,5 +1,7 @@
 # manifest-doctor
 
+[![tests](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml/badge.svg)](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml) *Tests run on Linux and Windows after every change.*
+
 A read-only tool that checks a folder against its checksum manifest and explains **why** things don't match, not just **that** they don't.
 
 ## The problem
@@ -117,7 +119,8 @@ If you already work with ASC MHL, keep using `ascmhl` for chain of custody.
 
 ## Known limits
 
-- **Testing so far:** tests have been run on Windows 11 with Python 3.13 only. macOS and Linux are not yet tested.
+- **Testing so far:** developed and used on Windows 11. The tests also run on GitHub's Linux and Windows machines (Python 3.11 and 3.13) after every change; the badge at the top shows the latest result. macOS is not tested.
+- **Extra columns in pipe manifests:** a `|` inside a file name is allowed, because the checksum is always at one end of the line. So a line with an extra column next to the name (e.g. `path|size|hash`) is read with that column as part of the name. It is still reported, as a missing file whose name shows the extra column, never passed.
 - **Simulated errors:** unreadable files are tested by simulating the error, not with real locked files.
 - **Wrapper folders combined with name differences:** a file that is *both* inside an extra folder *and* differs in Unicode or case is not paired.
 - **Clean-name collisions:** two different problem names can produce the same proposed clean name. This is not detected yet.

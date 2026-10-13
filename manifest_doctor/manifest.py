@@ -126,12 +126,13 @@ def _parse_md5sum_line(text, hash_len):
 
 
 def _parse_pipe_line(text, hash_len):
-    parts = text.split("|")
-    if len(parts) != 2:
+    # The checksum is always at one end, so a "|" inside a file name doesn't stop the line being read.
+    if "|" not in text:
         return None
-    left, right = parts
+    left, _, right = text.rpartition("|")
     if _is_hash(right.strip(), hash_len):
         return left, right.strip()
+    left, _, right = text.partition("|")
     if _is_hash(left.strip(), hash_len):
         return right, left.strip()
     return None
