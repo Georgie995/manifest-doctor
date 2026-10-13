@@ -180,3 +180,12 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **CI:** the tests now run on GitHub's Linux and Windows machines, with Python 3.11 and 3.13, after every push. Before this, they had only ever run on Windows.
 - **Tested by:** 3 new tests, shown failing first (one is a guard that passes before and after, so the fix can't go too far). 4 breaks made on purpose were each caught: the Path left unprotected, the checksum read only from the end, the line split at the first `|`, and a greedy version that takes a checksum from anywhere in the line.
 - **Approved by:** Georgi (step 1 of the review plan).
+
+## 2026-10-13: Empty files stay ERROR, even when they were empty at the source
+
+- **Raised by:** an outside review. Some deliveries legitimately include empty files (placeholders, for example), so an ERROR for every 0-byte file can be noisy.
+- **Options:** (a) keep ERROR always; (b) WARNING when the manifest's checksum is that of an empty file (empty at the source), ERROR otherwise.
+- **Decision (Georgi): (a).** In his experience, files that arrived on tape already empty from the source still made a downstream tool fail, so the delivery was broken whoever caused it. Under (b), a delivery whose only problem was such files would have passed with warnings.
+- **For deliveries that expect empty files:** one profile line, `severity.ZERO_BYTE = "WARNING"`, lowers it for every empty file. Confirmed with a real run: PROBLEMS FOUND by default, PASSED WITH WARNINGS with the profile.
+- **Tested by:** the existing empty-at-source test now also checks the severity. Softening it to WARNING on purpose made that test fail.
+- **Documented:** a short paragraph in the README, under *Options and workflow profiles*.

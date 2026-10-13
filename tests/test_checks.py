@@ -107,6 +107,8 @@ def test_zero_byte_detail_says_when_the_manifest_also_expected_an_empty_file():
     pair = Pair([entry("empty.mov", EMPTY_MD5)], FileInfo("empty.mov", 0), ["exact"])
     [finding] = check_zero_byte([FileInfo("empty.mov", 0)], [pair], "md5")
     assert "already empty" in finding.detail
+    # Still an ERROR (Georgi, 2026-10-13): empty at the source still broke the delivery downstream.
+    assert finding.severity == "ERROR"
 
 
 # --- Name hygiene -------------------------------------------------------------------

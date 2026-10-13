@@ -103,6 +103,8 @@ fail_on = "warning"
 
 The report header records where every setting came from: default, profile or command line.
 
+**Empty files are always errors, by design.** A 0-byte file is an ERROR even when the manifest's checksum shows it was already empty at the source. The finding says so, but isn't softened, because in my experience files that arrived empty from the source still broke a downstream tool. If your deliveries legitimately include empty files (placeholders, for example), lower it in a profile: `severity.ZERO_BYTE = "WARNING"`.
+
 ## Why not just use the standard tool?
 
 Use them. This tool complements them rather than replacing them.
