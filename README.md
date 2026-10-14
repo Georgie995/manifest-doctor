@@ -79,6 +79,27 @@ Exit code: `1`. The full finding list (missing file, checksum mismatches, zero-b
 
 `2` must never be treated as "clean": nothing was verified.
 
+## Compare two versions of a list
+
+When a delivery has been sent more than once, its checksum list changes from version to version. To find where a problem started, compare two versions at a time and work backwards:
+
+```bash
+python -m manifest_doctor compare delivery_v1.md5 delivery_v2.md5 --out reports
+```
+
+- **Only the two lists are read.** No folder is needed, and no file is opened.
+- **How files are paired:** by exact name first, then by a checksum that appears exactly once in each list. Never by similar-looking names.
+- **What it shows:**
+  - **Changed:** same name, different checksum. This usually points at the problem.
+  - **Renamed or moved:** same checksum, different name.
+  - **Only in the earlier list**, and **only in the later list**.
+  - **Can't tell which became which:** a checksum shared by several files, or a name listed more than once. These are shown together, not guessed.
+  - **Empty files:** all empty files share one checksum, so they're never paired.
+- **A changed file whose old content now sits under another name** is pointed out. This is the re-delivery pattern behind "one path, two versions".
+- **Lines that couldn't be read** are counted first, because a cut-off list makes files wrongly look as if they're only in the other list.
+- **Results:** `comparison.json`, `comparison.csv` and `summary.md`, in a new dated `compare-…` folder each time.
+- **Exit codes:** `0` the lists describe exactly the same files; `1` they differ; `2` they couldn't be compared, for example because a list is missing, empty, unreadable, or uses a different checksum type.
+
 ## Options and workflow profiles
 
 | Option | Default | Purpose |

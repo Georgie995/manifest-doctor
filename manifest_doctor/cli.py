@@ -2,12 +2,15 @@
 writes the reports and returns the exit code that automation reads:
 
     0 = no ERROR findings, 1 = at least one ERROR finding, 2 = the tool couldn't check.
+
+`compare` (two versions of a checksum list): 0 = identical, 1 = they differ, 2 = couldn't compare.
 """
 
 import argparse
 import sys
 from pathlib import Path
 
+from .compare import compare_lists, result_text, write_comparison
 from .config import ConfigError, resolve_settings
 from .findings import ERROR, WARNING
 from .manifest import ManifestError, best_prefix, read_manifest
@@ -24,7 +27,7 @@ def main(argv=None):
             stream.reconfigure(errors="backslashreplace")
     args = _parser().parse_args(argv)
     try:
-        return _check(args)
+        return _compare(args) if args.command == "compare" else _check(args)
     except (ConfigError, ManifestError, ScanError) as error:
         print(f"manifest-doctor: error: {error}", file=sys.stderr)
         return 2
@@ -48,7 +51,28 @@ def _parser():
     check.add_argument("--sqlite", action="store_true", help="also write findings.sqlite")
     check.add_argument("--progress-file", dest="progress_file",
                        help="keep a small JSON file up to date with how far the check has got (for apps)")
+    compare = commands.add_parser("compare", help="compare two versions of a checksum list, earlier and later "
+                                                  "(reads only the two lists)")
+    compare.add_argument("earlier", help="the earlier list")
+    compare.add_argument("later", help="the later list")
+    compare.add_argument("--algorithm", choices=["md5", "sha256"], default="md5")
+    compare.add_argument("--out", default="manifest-doctor-report", help="where comparison folders go")
     return parser
+
+
+def _compare(args):
+    comparison = compare_lists(args.earlier, args.later, args.algorithm)
+    folder = write_comparison(comparison, Path(args.out))
+    counts = (f"{len(comparison.changed)} changed, {len(comparison.renamed)} renamed or moved, "
+              f"{len(comparison.only_earlier)} only in the earlier list, {len(comparison.only_later)} only in the "
+              f"later list, {len(comparison.cannot_tell)} {'group' if len(comparison.cannot_tell) == 1 else 'groups'} "
+              f"that can't be told apart; "
+              f"{len(comparison.unchanged)} unchanged")
+    print(f"RESULT: {result_text(comparison)} ({counts})")
+    for note in comparison.notes + ([comparison.hint] if comparison.hint else []):
+        print(f"  {note}")
+    print(f"Results: {folder}")
+    return 0 if comparison.identical else 1
 
 
 def _check(args):

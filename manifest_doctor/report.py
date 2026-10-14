@@ -44,7 +44,7 @@ def count_by_severity(findings):
 
 def write_reports(result, out_dir, settings, sources, exit_code, sqlite=False, now=None):
     now = now or datetime.now().astimezone()
-    folder = _new_folder(Path(out_dir), now)
+    folder = new_folder(Path(out_dir), now)
     findings = sorted_findings(result.findings)
     counts = count_by_severity(findings)
     header = _header(result, settings, sources, exit_code, counts, now)
@@ -57,8 +57,9 @@ def write_reports(result, out_dir, settings, sources, exit_code, sqlite=False, n
     return folder
 
 
-def _new_folder(out_dir, now):
-    base = f"report-{now:%Y-%m-%d_%H%M%S}"
+def new_folder(out_dir, now, kind="report"):
+    """A new dated folder for one run's results ("report-..." or "compare-..."), never an existing one."""
+    base = f"{kind}-{now:%Y-%m-%d_%H%M%S}"
     suffix = 1
     while True:
         folder = out_dir / (base if suffix == 1 else f"{base}-{suffix}")

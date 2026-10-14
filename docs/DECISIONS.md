@@ -232,3 +232,27 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Tested by:**
   - **18 new tests:** 182 in total.
   - **Breaking it on purpose:** 10 protections were broken one at a time, and a test caught each one. One gap found while writing them (a missing file listed twice) got its own test.
+
+## 2026-10-14: Compare two versions of a checksum list
+
+- **Need, from Georgi's workflow:**
+  - **Versions of one list:** a delivery's checksum list changes from version to version, through re-deliveries. To find where a problem started, Georgi compares two versions at a time, the latest against the problematic one or the latest against the initial one, and works backwards. "Never more than two at once."
+  - **Client questions:** it also answers "where did this file go?" and "why are there fewer files?"
+- **Georgi's answers, one at a time:**
+  - **The "after" list can be anything:** "entirely dependent on the situation". So it reads any format manifest-doctor already reads, and nothing assumes tape or S3.
+  - **Always two lists.**
+  - **The two are called the "Earlier list" and the "Later list".**
+- **Decision (design section 13, approved):** a `compare` command that reads only the two lists. Files are paired:
+  1. **By exact name:** unchanged or changed.
+  2. **By a checksum that appears exactly once on each side:** renamed or moved.
+  3. **Shared checksums, or names listed more than once:** shown as groups, never guessed.
+
+  Empty files are never paired.
+- **Why exact name, and not similar names:** within versions of the same delivery, the same name is the same file. Similar-looking names would be a guess, which is manifest-doctor's rule against guessing between equal matches.
+- **Lists that start from different folders:**
+  - **No automatic stripping.** The shared start of a list is never removed automatically, because the longest shared folder can remove one level too many (the module 1 lesson).
+  - **Files still pair by checksum,** and a hint says the lists probably start from different folders.
+- **Found while building:** a name listed more than once first showed only its name. Each version's checksum was added, so a person can see which earlier version matches the later one.
+- **Tested by:**
+  - **27 new tests:** 209 in total.
+  - **11 rules broken on purpose,** and a test caught each one. Two gaps found along the way got their own tests: a cut-off line as the only difference, and the folder hint when other files are unchanged.

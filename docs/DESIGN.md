@@ -242,3 +242,57 @@ No network access anywhere. Sending the report to n8n is a separate step in Proj
 2. **Failing level:** exit code `1` only when there are ERRORs. Warnings are reported but don't fail the run. Changeable per profile (`fail_on = "warning"`).
 3. **Extra files:** not hashed by default. The `--hash-extras` flag turns it on.
 4. **Names:** the command is `manifest-doctor` and the Python package is `manifest_doctor`.
+
+## 13. Compare two lists (approved by Georgi, 2026-10-14)
+
+**Purpose, in Georgi's words and workflow:**
+- **The lists are versions of one delivery's checksum list:** the initial one, a later re-delivery, the latest. To find where a problem started, Georgi compares **two at a time** and works backwards through the versions: latest against problematic, or latest against initial.
+- **It also answers client questions:** "where did file X go?" and "why are there fewer files?"
+- **The lists can come from anywhere,** depending on the situation, so nothing assumes tape, S3 or a particular tool.
+
+**The command:** `manifest-doctor compare EARLIER LATER [--algorithm md5|sha256] [--out DIR]`.
+- **Reading the lists:** both are read with the existing reader (section 5.1), so every format, full-path lists, a byte-order mark and Windows line endings all work.
+  - Unreadable lines are reported with their line numbers.
+  - A path listed twice is noted.
+  - Both lists must use the same checksum type.
+- **Lists only:** it reads only the two lists. No folder is needed, and no file is opened, changed or moved. No network.
+- **Results:** written to a new dated folder (`compare-…`) containing `comparison.json`, `comparison.csv` and `summary.md`. Nothing is overwritten.
+- **Exit codes:**
+  - `0`: the two lists describe exactly the same files, with the same names and checksums;
+  - `1`: they differ;
+  - `2`: they couldn't be compared, for example because a list is missing, empty, or entirely unreadable.
+
+**How files are paired, never by similar-looking names:**
+1. **The same name in both lists.** After the usual tidying (forward slashes, no leading `./`, the same accent form), it's either **Unchanged** (same checksum) or **Changed** (different checksum). Changed is listed first, because it usually points at the problem.
+2. **Of the rest, a checksum that appears exactly once in each list:** **Renamed or moved**, shown as "earlier name → later name".
+3. **Of the rest, a checksum that appears more than once on either side:** **Can't tell which became which.** The files are shown together as a group and never paired. All empty files share one checksum, so they're shown as their own clearly labelled group.
+4. **Everything else:** **Only in the earlier list** or **Only in the later list**.
+
+**Details:**
+- **A changed file whose old content now sits under another name.** If a Changed file's earlier checksum now appears under another name in the later list, that's noted: *"its earlier content is now at …"*. This is the re-delivery pattern behind Georgi's S3-overwrite case.
+- **Upper and lower case:** names that differ only in case count as different names, because they are different files on S3.
+- **Lists that start from different folders:** if every path in one list begins with a folder the other list doesn't have, a hint says so. Nothing is stripped automatically. Files are still paired by checksum, so the comparison stays correct.
+- **What it proves:** following section 7's "What this check proves", it compares the names and checksums written in the two lists. It doesn't read any files, so it can't tell whether either list was right. Unreadable lines are counted prominently, because they make files wrongly look "only in the other list". That's how a cut-off list shows up.
+
+**In ClearSum:**
+- **The screen:** a "Compare lists" screen, reached from the sidebar, with two boxes, **Earlier list** and **Later list** (Georgi's wording). They're filled by drop or choose, then **Compare**.
+- **The results:**
+  - counts first;
+  - then the groups in the order above, each as a table;
+  - a **search box across every group**, for "where did X go?";
+  - long lists are shortened on screen, with the full list in the files;
+  - **Show in folder**.
+- **Where results are saved:** the reports folder, as `compare-…` folders. They aren't mixed into Earlier checks in this version.
+
+**Not in this version:**
+- **More than two lists at once.** Georgi never compares more than two.
+- **Reading the files themselves.** Comparing lists against a folder is what `check` does.
+- **Pairing by similar names.**
+
+**Build order, each test-first, with a plain summary after each:**
+1. the pairing rules and the comparison files (manifest-doctor);
+2. the command;
+3. the ClearSum screen;
+4. the docs.
+
+Georgi tries it before anything is pushed.
