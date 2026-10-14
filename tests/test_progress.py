@@ -174,3 +174,31 @@ def test_a_progress_file_inside_the_delivery_is_refused(tmp_path, capsys):
     assert run(tmp_path, tree, manifest, "--progress-file", str(tree / "progress.json")) == 2
     assert "inside the folder being checked" in capsys.readouterr().err
     assert not (tree / "progress.json").exists()
+
+
+# --- A held-back update still lands (for ClearSum's stuck warning, which names the file) --------------
+
+def test_an_update_held_back_to_keep_writes_few_still_lands_a_moment_later(tmp_path):
+    # If reading gets stuck the instant a new file starts, no further update will ever come, so the
+    # held-back "now reading" must still be written: the app's warning has to name the right file.
+    import time
+    path = tmp_path / "p.json"
+    progress = ProgressFile(path, min_interval=0.2)
+    progress.start_hashing(files_total=2, bytes_total=20)    # written
+    progress.file_started("ShowA/clip_0002.mov")             # too soon after that: held back...
+    assert json.loads(path.read_text(encoding="utf-8"))["current_file"] is None
+    time.sleep(0.6)                                          # ...and then nothing else happens
+    assert json.loads(path.read_text(encoding="utf-8"))["current_file"] == "ShowA/clip_0002.mov"
+
+
+def test_nothing_is_written_after_finished(tmp_path):
+    # A late catch-up must never bring back a progress file the app has already tidied away.
+    import time
+    path = tmp_path / "p.json"
+    progress = ProgressFile(path, min_interval=0.2)
+    progress.start_hashing(files_total=1, bytes_total=10)
+    progress.file_started("a.mov")                           # held back: a catch-up is due
+    progress.finish()
+    path.unlink()                                            # the app tidies it away
+    time.sleep(0.6)
+    assert not path.exists()

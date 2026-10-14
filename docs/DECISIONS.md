@@ -189,3 +189,17 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **For deliveries that expect empty files:** one profile line, `severity.ZERO_BYTE = "WARNING"`, lowers it for every empty file. Confirmed with a real run: PROBLEMS FOUND by default, PASSED WITH WARNINGS with the profile.
 - **Tested by:** the existing empty-at-source test now also checks the severity. Softening it to WARNING on purpose made that test fail.
 - **Documented:** a short paragraph in the README, under *Options and workflow profiles*.
+
+## 2026-10-14: A held-back progress update still lands
+
+- **Need:** ClearSum's new stuck warning names the file being read.
+  - **The problem:** to keep writes few, the progress file is updated at most about four times a second, so the update "now reading file B" can be held back. If reading then got stuck at once, no further update would come, and the app would name the previous file.
+- **Decision (Georgi, chosen over changing the app's wording):** a held-back update is written a quarter of a second later on its own, even while the check itself is stuck.
+- **Safety:**
+  - it only applies with `--progress-file`, so ordinary checks are unchanged;
+  - nothing is written after "finished", so a progress file the app has already tidied away is never brought back;
+  - the extra writer never keeps manifest-doctor running after the check.
+- **Tested by:**
+  - **2 new tests:** 164 in total.
+  - **Breaking it on purpose:** removing the catch-up was caught, and removing the after-finished refusal was caught.
+  - **A guard removed:** a second guard, cancelling the pending update, only did the same job as the refusal, which is what actually guarantees it. It was removed, so every guard left is proven by a test.
