@@ -223,7 +223,7 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
     - extra files;
     - system files set aside.
   - **The closing sentence:** "This shows the files match the manifest today. It can't tell you whether the manifest itself was right, or catch changes made after this check."
-  - **One extra sentence, written in the same style and shown to Georgi before publishing:** for the command-line-only `--hash-extras` case, extra files "...so there was nothing to compare them with (their checksums are in the report)."
+  - **One extra sentence, written in the same style and approved by Georgi before publishing:** for the command-line-only `--hash-extras` case, extra files "...so there was nothing to compare them with (their checksums are in the report)."
 - **Counting rules:**
   - a path listed twice is one file;
   - a file found under a slightly different name (accent, case or an extra folder) is counted, and the sentence points to the warnings;
