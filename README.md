@@ -28,6 +28,7 @@ These come from real failures handled in post-production ingest, tape archive an
 5. **Checks**: missing, extra, size or checksum mismatch, zero-byte, problem names (with a *proposed* clean name; nothing is renamed), duplicate listings, and conflicts between several manifests.
 6. **Diagnoses**: groups related findings into **probable causes** (wrapper folder, Unicode form, case only, duplicate listing, system-file noise), each listing the files it covers. Every cause is labelled *"Probable cause, not a verdict."*
 7. **Reports**: writes `report.json` (for automation), `report.csv` (for spreadsheets), `summary.md` (for people) and optionally `findings.sqlite`, into a new dated folder each run.
+8. **Says what it proved**: a few plain sentences at the end of `summary.md` (and in `report.json`), worked out from what the check actually did. For example: how many listed files were read in full and matched, what wasn't checked and why (not found, unreadable, a folder that couldn't be opened, manifest lines that couldn't be read, extra or system files), and what no checksum check can tell you.
 
 It never modifies, renames, moves or deletes anything in the folder it checks, and it makes no network calls.
 

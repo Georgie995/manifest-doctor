@@ -203,3 +203,32 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
   - **2 new tests:** 164 in total.
   - **Breaking it on purpose:** removing the catch-up was caught, and removing the after-finished refusal was caught.
   - **A guard removed:** a second guard, cancelling the pending update, only did the same job as the refusal, which is what actually guarantees it. It was removed, so every guard left is proven by a test.
+
+## 2026-10-14: Every report says what the check proved, and what it didn't
+
+- **Need:** Georgi's principle of honest labelling, as in "probable cause, not a verdict". A result like CLEAN or PROBLEMS FOUND doesn't say how much was actually examined:
+  - how many listed files were really read;
+  - what was skipped, and why;
+  - what no checksum check can ever tell you.
+- **Decision:** a few plain sentences, worked out only from what the check did (`coverage.py`), so they can't claim more than that.
+  - **Where they go:** report.json (`header.coverage`, with the numbers behind them) and the end of summary.md.
+  - **What stays the same:** the command-line output, because other tools read it.
+- **Wording:** approved by Georgi (2026-10-14).
+  - **The main sentence:** for example, "1,186 of the 1,204 files listed in the manifest were read in full and their MD5 checksums compared: 1,184 matched and 2 didn't."
+  - **A "Not checked" list, each item only when it applies:**
+    - files not found;
+    - files that couldn't be read;
+    - folders that couldn't be opened;
+    - manifest lines that couldn't be read, which catches a cut-off list;
+    - extra files;
+    - system files set aside.
+  - **The closing sentence:** "This shows the files match the manifest today. It can't tell you whether the manifest itself was right, or catch changes made after this check."
+  - **One extra sentence, written in the same style and shown to Georgi before publishing:** for the command-line-only `--hash-extras` case, extra files "...so there was nothing to compare them with (their checksums are in the report)."
+- **Counting rules:**
+  - a path listed twice is one file;
+  - a file found under a slightly different name (accent, case or an extra folder) is counted, and the sentence points to the warnings;
+  - a locked folder is counted apart from unreadable files.
+- **Other tools unaffected:** delivery-ops-hub, ai-triage and delivery-desk read only the report fields they name, so a new field changes nothing for them.
+- **Tested by:**
+  - **18 new tests:** 182 in total.
+  - **Breaking it on purpose:** 10 protections were broken one at a time, and a test caught each one. One gap found while writing them (a missing file listed twice) got its own test.

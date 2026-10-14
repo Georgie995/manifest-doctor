@@ -15,6 +15,9 @@ HIDDEN_NAMES = (".DS_Store", "Thumbs.db", "desktop.ini")
 HIDDEN_PREFIXES = ("._",)  # macOS AppleDouble companions, e.g. "._clip.mov"
 HIDDEN_FOLDERS = (".Spotlight-V100", ".Trashes", ".fseventsd", ".TemporaryItems")
 
+# How a folder that couldn't be opened is described. coverage.py counts these separately from files.
+FOLDER_UNREADABLE = "folder could not be listed"
+
 
 class ScanError(Exception):
     """The folder itself can't be checked. The tool stops (exit code 2)."""
@@ -48,7 +51,7 @@ def scan_tree(root, hidden_names=HIDDEN_NAMES, hidden_prefixes=HIDDEN_PREFIXES,
         # so one locked folder doesn't stop the whole check.
         findings.append(make_finding(
             "UNREADABLE", path=_relative(root, Path(error.filename)),
-            detail=f"folder could not be listed: {error.strerror}"))
+            detail=f"{FOLDER_UNREADABLE}: {error.strerror}"))
 
     for folder, _subfolders, names in os.walk(root, onerror=folder_error):
         for name in names:

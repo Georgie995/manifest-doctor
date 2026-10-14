@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import __version__
+from .coverage import coverage
 from .findings import ERROR, INFO, WARNING
 
 CSV_COLUMNS = ["severity", "code", "path", "detail", "manifest", "line",
@@ -83,6 +84,7 @@ def _header(result, settings, sources, exit_code, counts, now):
                        "stripped_prefix": m.stripped_prefix} for m in result.manifests],
         "cross_set": {status: sum(s == status for s in cross)
                       for status in ("identical", "conflicting", "unique")} if result.cross_set else None,
+        "coverage": coverage(result, settings["algorithm"], settings["hash_extras"]),
     }
 
 
@@ -140,6 +142,11 @@ def _write_summary(path, header, causes, findings):
             lines.append(f"| {f.severity} | {f.code} | `{_cell(where)}` | {_cell(detail)} |")
         if len(findings) > SUMMARY_FINDING_LIMIT:
             lines.append(f"\n… and {len(findings) - SUMMARY_FINDING_LIMIT} more findings (full list in report.csv)")
+    proves = header["coverage"]
+    lines += ["", "## What this check proves", "", proves["proved"]]
+    if proves["not_checked"]:
+        lines += ["", "**Not checked:**", "", *(f"- {sentence}" for sentence in proves["not_checked"])]
+    lines += ["", f"**What it can't tell you:** {proves['cannot_tell']}"]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

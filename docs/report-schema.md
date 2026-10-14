@@ -16,6 +16,7 @@
 | `settings` | object | Each setting as `{"value": …, "source": "default" \| "profile NAME" \| "command line"}` |
 | `manifests` | array | One per manifest: `path`, `format` (`md5sum`, `pipe` or `csv`), `entries` (count), `stripped_prefix` (or `null`) |
 | `cross_set` | object or null | With 2+ manifests: number of paths `identical`, `conflicting` and `unique`. Otherwise `null`. |
+| `coverage` | object | What the check proves, and what it doesn't (added 2026-10-14). Plain sentences: `proved` (string), `not_checked` (array of strings, empty when nothing was left unchecked), `cannot_tell` (string). The numbers behind them: `checksum` (`"MD5"` or `"SHA-256"`), `manifests`, `listed`, `found`, `found_under_other_name`, `read`, `matched`, `mismatched`, `missing`, `unreadable_files`, `unreadable_folders`, `unreadable_lines`, `extra`, `extra_checksummed` (true/false), `set_aside`. Reports made before this date don't have it. |
 
 ## causes (array, most serious first)
 

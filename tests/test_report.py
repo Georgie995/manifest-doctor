@@ -137,3 +137,24 @@ def test_sqlite_is_written_only_when_asked_and_can_be_queried(tmp_path):
         cause_files = db.execute("SELECT path FROM cause_paths WHERE cause_code = 'CAUSE_HIDDEN_NOISE'").fetchall()
     assert counts == {"HIDDEN_FILE": 1, "MISSING": 1}
     assert cause_files == [("ShowA/.DS_Store",)]
+
+
+# --- What this check proves (Georgi's approved wording, 2026-10-14) -------------------------------
+
+def test_report_json_carries_what_the_check_proves_with_its_numbers(tmp_path):
+    data = json.loads((write(tmp_path, sample_result(tmp_path)) / "report.json").read_text(encoding="utf-8"))
+    proves = data["header"]["coverage"]
+    assert proves["proved"].startswith("2 of the 3 files listed in the manifest were read in full")
+    assert proves["not_checked"] == ["1 listed file wasn't found, so it couldn't be compared.",
+                                     "1 system file (such as .DS_Store) was set aside and not checked."]
+    assert proves["cannot_tell"].startswith("This shows the files match the manifest today.")
+    assert (proves["listed"], proves["read"], proves["checksum"]) == (3, 2, "MD5")
+
+
+def test_summary_ends_with_what_the_check_proves_after_the_findings(tmp_path):
+    text = (write(tmp_path, sample_result(tmp_path)) / "summary.md").read_text(encoding="utf-8")
+    assert text.index("## Findings") < text.index("## What this check proves")
+    section = text[text.index("## What this check proves"):]
+    assert "2 of the 3 files listed in the manifest were read in full" in section
+    assert "**Not checked:**\n\n- 1 listed file wasn't found, so it couldn't be compared." in section
+    assert "**What it can't tell you:** This shows the files match the manifest today." in section
