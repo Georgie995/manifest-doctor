@@ -1,6 +1,6 @@
 # manifest-doctor
 
-[![tests](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml/badge.svg)](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml) *Tests run on Linux and Windows after every change.*
+[![tests](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml/badge.svg)](https://github.com/Georgie995/manifest-doctor/actions/workflows/tests.yml) *Tests run on Linux and Windows after every change, and every Monday.*
 
 A read-only tool that checks a folder against its checksum manifest and explains **why** things don't match, not just **that** they don't.
 

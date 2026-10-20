@@ -256,3 +256,14 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Tested by:**
   - **27 new tests:** 209 in total.
   - **11 rules broken on purpose,** and a test caught each one. Two gaps found along the way got their own tests: a cut-off line as the only difference, and the folder hint when other files are unchanged.
+
+## 2026-10-20: Tests run on GitHub after every push, and every Monday
+
+- **Need:** Georgi asked which automations would genuinely improve the published tools (research in his private notes). This repo already ran its tests on Linux and Windows after every push.
+- **Options:** (a) leave as is; (b) add a weekly run.
+- **Decision (Georgi, 2026-10-20):** (b). The push runs are unchanged.
+  - **Every Monday at 06:00 UTC** the tests run again even if nothing was pushed, so a new Python version or a change in a sibling repo is noticed without anyone looking.
+  - **Safety:** read-only permissions, no secrets (so no AI call is possible), and only GitHub's own official actions.
+- **Known limits:**
+  - GitHub pauses scheduled runs in a repo with no activity for 60 days.
+- **Tested by:** before pushing, each suite was run from fresh local clones laid out exactly as the workflow lays them out. A checker confirmed every workflow file follows the rules above, and each rule was broken on purpose once (write permission, no Monday run, a secret, a non-GitHub action, a wrong or missing sibling, the wrong machines); the checker caught every break. The workflow itself can only be fully proven on GitHub, by the first run after pushing.

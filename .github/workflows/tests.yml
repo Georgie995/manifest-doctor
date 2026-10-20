@@ -1,10 +1,12 @@
-# Runs the tests on GitHub's own Linux and Windows machines after every push,
-# on the oldest and newest Python versions manifest-doctor supports.
+# Runs the tests on GitHub's own Linux and Windows machines after every push, and every Monday
+# even if nothing was pushed, on the oldest and newest Python versions manifest-doctor supports.
 name: tests
 
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
 
 permissions:
   contents: read
