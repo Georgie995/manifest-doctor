@@ -296,3 +296,20 @@ No network access anywhere. Sending the report to n8n is a separate step in Proj
 4. the docs.
 
 Georgi tries it before anything is pushed.
+
+## 14. Make a list from the source (approved by Georgi, 2026-10-20)
+
+**Purpose, from Georgi's automation answers (Q3, Q4):**
+- **Some copy methods write a checksum list when they finish; others don't.** When they don't, making a list became a separate step at work, and it was made from the **copy**, after confirming the copy succeeded.
+- **Georgi prefers the list made from the source:** "much more secure", and it "eliminates a lot of guesswork and back and forth". A list made from the copy always agrees with that copy, so it can't catch a bad copy.
+- **It's the first step of delivery-desk's copy → verify → alert chain.**
+
+**The command:** `manifest-doctor make SOURCE --out LIST [--algorithm md5|sha256]`.
+- **Reads the source only,** using the existing scan (section 4) and the existing chunked checksums. No network.
+- **Writes the common `checksum  path` format,** sorted by path, in UTF-8 with `
+` line endings, so `check` reads it like any other manifest.
+- **Leaves system clutter out,** exactly as `check` sets it aside, and says how many files were left out.
+- **All or nothing.** No list is written if any file or folder can't be read, the source has no files, or a name contains a line break (the list has one line per file). The message lists every reason.
+- **Where it writes:** never inside the source, and never over an existing file. The existing-file check happens before any checksumming, and the file is created in "create only" mode, so a list appearing meanwhile is still safe. A failed write leaves no half list behind.
+- **Says what it proves:** what the source held when it was read, not that any copy matches.
+- **Exit codes:** `0` a list was written; `2` no list was written.

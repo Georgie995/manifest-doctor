@@ -4,6 +4,7 @@ writes the reports and returns the exit code that automation reads:
     0 = no ERROR findings, 1 = at least one ERROR finding, 2 = the tool couldn't check.
 
 `compare` (two versions of a checksum list): 0 = identical, 1 = they differ, 2 = couldn't compare.
+`make` (a list from the source, before a copy): 0 = list written, 2 = no list written.
 """
 
 import argparse
@@ -13,6 +14,7 @@ from pathlib import Path
 from .compare import compare_lists, result_text, write_comparison
 from .config import ConfigError, resolve_settings
 from .findings import ERROR, WARNING
+from .make import make_list
 from .manifest import ManifestError, best_prefix, read_manifest
 from .progress import ProgressFile
 from .report import count_by_severity, counts_text, result_label, write_reports
@@ -27,7 +29,8 @@ def main(argv=None):
             stream.reconfigure(errors="backslashreplace")
     args = _parser().parse_args(argv)
     try:
-        return _compare(args) if args.command == "compare" else _check(args)
+        commands = {"compare": _compare, "make": _make, "check": _check}
+        return commands[args.command](args)
     except (ConfigError, ManifestError, ScanError) as error:
         print(f"manifest-doctor: error: {error}", file=sys.stderr)
         return 2
@@ -57,7 +60,22 @@ def _parser():
     compare.add_argument("later", help="the later list")
     compare.add_argument("--algorithm", choices=["md5", "sha256"], default="md5")
     compare.add_argument("--out", default="manifest-doctor-report", help="where comparison folders go")
+    make = commands.add_parser("make", help="make a checksum list from the source, before a copy "
+                                            "(reads the source only)")
+    make.add_argument("source", help="the folder to list (never modified)")
+    make.add_argument("--out", required=True, help="the list file to write (never overwritten; not in the source)")
+    make.add_argument("--algorithm", choices=["md5", "sha256"], default="md5")
     return parser
+
+
+def _make(args):
+    made = make_list(args.source, args.out, args.algorithm)
+    clutter = f"; {made.left_out} system files left out" if made.left_out else ""
+    print(f"LIST WRITTEN: {made.files} files ({args.algorithm}){clutter}")
+    print(f"  {made.path}")
+    print("  This list was made from the source. It proves what the source held when it was read, "
+          "not that any copy matches: check the copy against it.")
+    return 0
 
 
 def _compare(args):

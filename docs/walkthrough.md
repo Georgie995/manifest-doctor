@@ -564,3 +564,13 @@ Testing on macOS and Linux; a "whole folder missing" cause; detecting proposed c
    3. `python -m pytest`
 
    Compare your output with the README's example run.
+
+## Feature: `make`, a list from the source (2026-10-20)
+
+**In plain words:** before a copy starts, `make` reads every file in the source and writes down each file's checksum, its fingerprint, in a list. After the copy, `check` compares the copy against that list. If anything went wrong in the copy, the fingerprints won't match.
+
+**Why from the source, not the copy:** a list made from the copy is like checking a dub against itself. It always passes, so it proves nothing about the copy. A list made from the source is like checking the dub against the master.
+
+**Why "all or nothing":** if one source file can't be read, a list without it would make the later check quietly skip that file. So no list is written at all, and the message names the file and the reason.
+
+**Where it is:** `manifest_doctor/make.py` (about 60 lines), plus the `make` command in `cli.py`.

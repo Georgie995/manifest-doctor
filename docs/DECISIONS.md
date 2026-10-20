@@ -274,3 +274,18 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Options:** (a) rename it in a new commit; (b) leave it, since it's only a test file name.
 - **Decision (Georgi, 2026-10-20):** (a). It's now `earlier.md5`, next to `later.md5`. The old name is still in the git history from 2026-10-14, because published history is never rewritten.
 - **Tested by:** the full suite, 209 passed.
+
+## 2026-10-20: `make`, a checksum list from the source
+
+- **Need (Georgi's automation answers):** at work, some copy methods wrote no checksum list, so a list was made afterwards from the copy. A list made from the copy always agrees with it, so it can't catch a bad copy. Georgi chose to make it from the source instead, for the copy → verify → alert chain in delivery-desk.
+- **Options:**
+  - (a) from the source, before the copy;
+  - (b) from the source, after the copy;
+  - (c) from the copy, as at work.
+- **Decision (Georgi, 2026-10-20):** (a). If the source changes during the copy, the later check catches it. The cost is that the source is read twice.
+- **Safety rules:**
+  - read-only on the source;
+  - all or nothing: no list if anything can't be read, the source is empty, or a name contains a line break;
+  - never inside the source, and never overwriting. Checked before any checksumming, and enforced again by "create only" when writing;
+  - no half-written list left after a failed write.
+- **Tested by:** 15 new tests (224 in total). They include a bad copy (same size, different content, one file missing) being caught by `check` against the source list. 11 protections were broken on purpose, and a test caught each one. The line-break rule can only be tested on Linux, where GitHub runs it. Along the way, an extra sort was removed because the scan already sorts, so it proved nothing.

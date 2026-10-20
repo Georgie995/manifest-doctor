@@ -100,6 +100,23 @@ python -m manifest_doctor compare delivery_v1.md5 delivery_v2.md5 --out reports
 - **Results:** `comparison.json`, `comparison.csv` and `summary.md`, in a new dated `compare-…` folder each time.
 - **Exit codes:** `0` the lists describe exactly the same files; `1` they differ; `2` they couldn't be compared, for example because a list is missing, empty, unreadable, or uses a different checksum type.
 
+## Make a list from the source, before a copy
+
+Some copy methods write a checksum list; others don't. When there's none, the list has to come from the **source**. A list made from the copy after it lands will always agree with that copy, so it can never catch a bad copy. It only proves nothing changed afterwards.
+
+```bash
+python -m manifest_doctor make /restore/ShowA --out lists/ShowA-source.md5
+python -m manifest_doctor check /deliveries/ShowA --manifest lists/ShowA-source.md5
+```
+
+- **The source is only read,** never changed.
+- **The list** is the common `checksum  path` format, sorted by path, MD5 by default (`--algorithm sha256` for SHA-256). System clutter (`.DS_Store`, `Thumbs.db` and similar) is left out, as `check` sets it aside.
+- **All or nothing:** if any file or folder can't be read, the source is empty, or a name contains a line break, **no list is written**, and the message names every reason. A list with gaps would make the later check look cleaner than the copy really is.
+- **Never overwritten, never inside the source.** An existing list stops it before any checksumming starts.
+- **Exit codes:** `0` the list was written; `2` no list was written.
+
+[delivery-desk](https://github.com/Georgie995/delivery-desk) uses this in its copy → verify → alert chain.
+
 ## Options and workflow profiles
 
 | Option | Default | Purpose |
