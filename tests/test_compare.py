@@ -156,7 +156,7 @@ def test_what_a_comparison_can_and_cant_tell(tmp_path):
 
 
 def test_full_path_and_md5sum_style_lists_are_read_too(tmp_path):
-    earlier = tmp_path / "yoyotta.md5"
+    earlier = tmp_path / "earlier.md5"
     earlier.write_text(f"/Volumes/RAID/SHOW/Reel01/a.mov|{md5('a')}\n", encoding="utf-8")
     later = tmp_path / "later.md5"
     later.write_text(f"{md5('a')}  Reel01/a.mov\n", encoding="utf-8")

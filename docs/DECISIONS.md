@@ -267,3 +267,10 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
 - **Known limits:**
   - GitHub pauses scheduled runs in a repo with no activity for 60 days.
 - **Tested by:** before pushing, each suite was run from fresh local clones laid out exactly as the workflow lays them out. A checker confirmed every workflow file follows the rules above, and each rule was broken on purpose once (write permission, no Monday run, a secret, a non-GitHub action, a wrong or missing sibling, the wrong machines); the checker caught every break. The workflow itself can only be fully proven on GitHub, by the first run after pushing.
+
+## 2026-10-20: A test file no longer names commercial tape software
+
+- **Found by:** a new private check Georgi runs before every push. Run over the whole published history, it found one test file name (in `tests/test_compare.py`) that named a commercial tape archive product. The project briefs say published material never names commercial tape software.
+- **Options:** (a) rename it in a new commit; (b) leave it, since it's only a test file name.
+- **Decision (Georgi, 2026-10-20):** (a). It's now `earlier.md5`, next to `later.md5`. The old name is still in the git history from 2026-10-14, because published history is never rewritten.
+- **Tested by:** the full suite, 209 passed.
