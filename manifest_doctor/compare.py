@@ -25,6 +25,9 @@ LIMITS = ("This compares the names and checksums written in the two lists. It do
           "so it can't tell whether either list was right.")
 SUMMARY_GROUP_LIMIT = 50     # files shown per group in summary.md; the CSV always has every one
 CSV_COLUMNS = ["group", "earlier_path", "later_path", "earlier_checksum", "later_checksum", "note"]
+# Excel runs a cell starting with one of these as a formula, so a name from someone else's list could
+# act on the spreadsheet. A leading ' makes Excel show it as text (OWASP's list; Georgi's choice, 2026-11-02).
+FORMULA_STARTS = ("=", "+", "-", "@", "\t", "\r")
 
 
 @dataclass
@@ -262,7 +265,11 @@ def _write_csv(path, c):
     with open(path, "w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(CSV_COLUMNS)
-        writer.writerows(_rows(c))
+        writer.writerows([_as_text(cell) for cell in row] for row in _rows(c))
+
+
+def _as_text(cell):
+    return "'" + cell if cell.startswith(FORMULA_STARTS) else cell
 
 
 def _write_summary(path, c, header):

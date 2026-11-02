@@ -98,6 +98,7 @@ python -m manifest_doctor compare delivery_v1.md5 delivery_v2.md5 --out reports
 - **A changed file whose old content now sits under another name** is pointed out. This is the re-delivery pattern behind "one path, two versions".
 - **Lines that couldn't be read** are counted first, because a cut-off list makes files wrongly look as if they're only in the other list.
 - **Results:** `comparison.json`, `comparison.csv` and `summary.md`, in a new dated `compare-…` folder each time.
+- **Safe in Excel:** in `comparison.csv`, a name that starts like a formula (`=`, `+`, `-`, `@`, a tab or a carriage return) gets a leading `'`, so Excel shows it as text and never runs it. `comparison.json` keeps every name exactly as listed.
 - **Exit codes:** `0` the lists describe exactly the same files; `1` they differ; `2` they couldn't be compared, for example because a list is missing, empty, unreadable, or uses a different checksum type.
 
 ## Make a list from the source, before a copy

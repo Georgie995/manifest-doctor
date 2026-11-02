@@ -289,3 +289,13 @@ Georgi reviewed the findings for two synthetic deliveries (mixed problems; a wra
   - never inside the source, and never overwriting. Checked before any checksumming, and enforced again by "create only" when writing;
   - no half-written list left after a failed write.
 - **Tested by:** 15 new tests (224 in total). They include a bad copy (same size, different content, one file missing) being caught by `check` against the source list. 11 protections were broken on purpose, and a test caught each one. The line-break rule can only be tested on Linux, where GitHub runs it. Along the way, an extra sort was removed because the scan already sorts, so it proved nothing.
+
+## 2026-11-02: `comparison.csv` shows formula-like names as text
+
+- **Found by:** a security review of ClearSum (which runs this comparison) using an outside security-audit skill. A name in someone else's checksum list went into `comparison.csv` exactly as written. Georgi confirmed it in Excel with a made-up list: a "file" named `=1+1` showed as `2`, so Excel ran it as a formula. Whoever writes a list could use this to act on Georgi's spreadsheet when he opens the CSV.
+- **Options:**
+  - (a) put a `'` in front of any cell starting with `=`, `+`, `-`, `@`, a tab or a carriage return (OWASP's list);
+  - (b) the same, but leave names starting with `-` alone;
+  - (c) leave the CSV as is and warn in the README.
+- **Decision (Georgi, 2026-11-02):** (a). Excel hides the leading `'` in the cell, so names still look right there; it shows in the formula bar and in plain-text tools. `comparison.json` and `summary.md` are unchanged and keep every name exactly as listed.
+- **Tested by:** 1 new test (226 in total: 225 passed, 1 Linux-only skipped on Windows). Each of the six characters was removed from the guard on purpose, one at a time, and the test caught every one. A leading carriage return can reach the CSV because lines are split on `\n` only, so it is guarded and tested too.

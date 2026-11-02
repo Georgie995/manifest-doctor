@@ -200,6 +200,21 @@ def test_comparison_csv_has_one_row_per_file_with_its_group(tmp_path):
         ("unchanged", "Reel01/a.mov", "Reel01/a.mov")]
 
 
+def test_comparison_csv_shows_a_name_that_looks_like_a_formula_as_text(tmp_path):
+    """Security review, 2026-11-02: Excel ran a listed name "=1+1" as a formula. A leading ' makes
+    Excel show it as text (Georgi's choice: every character OWASP lists). comparison.json keeps the real name."""
+    import csv
+    risky = ["=1+1", "+1+1", "-1+1", "@SUM(1)", "\t=1+1", "\r=1+1"]
+    entries = [(name, md5(name)) for name in risky] + [A]
+    c = compare(tmp_path, entries, entries)
+    folder = write_comparison(c, tmp_path / "out", now=FIXED_TIME)
+    with open(folder / "comparison.csv", encoding="utf-8-sig", newline="") as handle:
+        shown = {r["earlier_path"] for r in csv.DictReader(handle)}
+    assert shown == {"'" + name for name in risky} | {"Reel01/a.mov"}
+    data = json.loads((folder / "comparison.json").read_text(encoding="utf-8"))
+    assert {x["path"] for x in data["unchanged"]} == set(risky) | {"Reel01/a.mov"}
+
+
 def test_summary_puts_changed_first_and_says_what_the_comparison_can_tell(tmp_path):
     c = compare(tmp_path, [A, B], [A, ("Reel01/b.mov", md5("new")), C])
     text = (write_comparison(c, tmp_path / "out", now=FIXED_TIME) / "summary.md").read_text(encoding="utf-8")
